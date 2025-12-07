@@ -17,13 +17,16 @@ import {
 import { NavMain } from "@/components/nav-main"
 import { NavProjects } from "@/components/nav-projects"
 import { NavUser } from "@/components/nav-user"
-import { TeamSwitcher } from "@/components/team-switcher"
+// import { TeamSwitcher } from "@/components/team-switcher"
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
 } from "@workspace/ui/components/sidebar"
 
 // This is sample data.
@@ -160,7 +163,30 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
+        {/* Single Profile Display - Future: Will replace with ProfileSwitcher for multiple profiles */}
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild>
+              <a href="#">
+                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+                  <GalleryVerticalEnd className="size-4" />
+                </div>
+                <div className="flex flex-col gap-0.5 leading-none">
+                  <span className="font-semibold">Helixque</span>
+                  <span className="text-xs">Company</span>
+                </div>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+
+        {/* TODO: Implement ProfileSwitcher component for multiple profile/organization switching
+        <ProfileSwitcher profiles={data.profiles} currentProfile={data.currentProfile} />
+        */}
+
+        {/* Original TeamSwitcher implementation - Keep for reference
         <TeamSwitcher teams={data.teams} />
+        */}
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
