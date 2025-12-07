@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Image from "next/image"
 import {
   AudioWaveform,
   BookOpen,
@@ -21,7 +22,6 @@ import {
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
-import { NavProjects } from "@/components/nav-projects"
 import { NavProFeatures } from "@/components/nav-pro-features"
 import { NavSocials } from "@/components/nav-socials"
 import { NavConnect } from "@/components/nav-connect"
@@ -48,7 +48,7 @@ const data = {
   teams: [
     {
       name: "Acme Inc",
-      logo: GalleryVerticalEnd,
+      logo: "https://www.helixque.com/logo.svg",
       plan: "Enterprise",
     },
     {
@@ -228,8 +228,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <a href="#">
-                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <GalleryVerticalEnd className="size-4" />
+                <div className="bg-sidebar text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+                  {/* <GalleryVerticalEnd className="size-4" /> */}
+                  <Image src="https://www.helixque.com/logo.svg" alt="Helixque Logo" width={32} height={32} />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
                   <span className="font-semibold">Helixque</span>
