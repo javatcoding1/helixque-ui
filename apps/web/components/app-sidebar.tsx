@@ -9,13 +9,22 @@ import {
   Frame,
   GalleryVerticalEnd,
   Map,
+  MessageCircle,
+  Users,
+  Heart,
+  Handshake,
+  Award,
   PieChart,
   Settings2,
   SquareTerminal,
+  Zap,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
 import { NavProjects } from "@/components/nav-projects"
+import { NavProFeatures } from "@/components/nav-pro-features"
+import { NavSocials } from "@/components/nav-socials"
+import { NavConnect } from "@/components/nav-connect"
 import { NavUser } from "@/components/nav-user"
 // import { TeamSwitcher } from "@/components/team-switcher"
 import {
@@ -157,6 +166,57 @@ const data = {
       icon: Map,
     },
   ],
+  proFeatures: [
+    {
+      title: "Upgrade Plan",
+      url: "#",
+      icon: Zap,
+    },
+    {
+      title: "Advanced Settings",
+      url: "#",
+      icon: Settings2,
+    },
+    {
+      title: "AI Assistant",
+      url: "#",
+      icon: Zap,
+    },
+  ],
+  socials: [
+    {
+      title: "Friends",
+      url: "#",
+      icon: Users,
+      badge: 0,
+    },
+    {
+      title: "Chats",
+      url: "#",
+      icon: MessageCircle,
+      badge: 3,
+    },
+  ],
+  connect: [
+    {
+      title: "Anonymous Connect",
+      url: "#",
+      icon: Heart,
+      badge: 0,
+    },
+    {
+      title: "Professional Connect",
+      url: "#",
+      icon: Handshake,
+      badge: 0,
+    },
+    {
+      title: "Join as a Mentor",
+      url: "#",
+      icon: Award,
+      badge: 0,
+    },
+  ],
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -190,7 +250,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        {/* <NavProjects projects={data.projects} /> */}
+        <NavProFeatures features={data.proFeatures} />
+        <NavSocials items={data.socials} />
+        <NavConnect items={data.connect} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />
