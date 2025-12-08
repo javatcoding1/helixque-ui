@@ -192,9 +192,15 @@ const data = {
     },
     {
       title: "Chats",
-      url: "#",
+      url: "/dashboard/chats",
       icon: MessageCircle,
       badge: 3,
+    },
+    {
+      title: "Settings",
+      url: "/dashboard/settings",
+      icon: Settings2,
+      badge: 0,
     },
   ],
   connect: [

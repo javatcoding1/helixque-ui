@@ -17,7 +17,6 @@ import {
   IconChevronLeft,
   IconChevronRight,
   IconCircleCheckFilled,
-  IconAlertCircle,
   IconLoader,
 } from "@tabler/icons-react"
 import { Button } from "@workspace/ui/components/button"
@@ -145,8 +144,20 @@ function fuzzySearch(haystack: string, needle: string): boolean {
   return true
 }
 
+interface Friend {
+  id: number;
+  name: string;
+  displayName: string;
+  avatar: string;
+  status?: string;
+  availability?: string;
+  lastSeen?: string;
+  sentAt?: string;
+  receivedAt?: string;
+}
+
 interface FriendCardProps {
-  friend: any
+  friend: Friend;
   type: TabType
   isLoading?: boolean
   onAction?: (id: number, action: string) => void
@@ -369,10 +380,9 @@ export default function FriendsPage() {
   }
 
   const tabs = getTabs()
-  const currentTabData = tabs.find(t => t.id === activeTab)?.data || []
-  
-  // Apply fuzzy search filter
+  // Move currentTabData inside useMemo
   const filteredData = useMemo(() => {
+    const currentTabData = tabs.find(t => t.id === activeTab)?.data || []
     if (!searchQuery.trim()) return currentTabData
     return currentTabData.filter(friend =>
       fuzzySearch(
@@ -380,7 +390,7 @@ export default function FriendsPage() {
         searchQuery.toLowerCase()
       )
     )
-  }, [currentTabData, searchQuery])
+  }, [tabs, activeTab, searchQuery])
 
   // Paginate filtered data
   const totalPages = Math.ceil(filteredData.length / itemsPerPage)
