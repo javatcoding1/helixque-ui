@@ -8,7 +8,6 @@ import {
   Bot,
   Command,
   Frame,
-  GalleryVerticalEnd,
   Map,
   MessageCircle,
   Users,
@@ -195,12 +194,6 @@ const data = {
       url: "/dashboard/chats",
       icon: MessageCircle,
       badge: 3,
-    },
-    {
-      title: "Settings",
-      url: "/dashboard/settings",
-      icon: Settings2,
-      badge: 0,
     },
   ],
   connect: [
