@@ -186,7 +186,7 @@ const data = {
   socials: [
     {
       title: "Friends",
-      url: "#",
+      url: "/dashboard/friends",
       icon: Users,
       badge: 0,
     },
