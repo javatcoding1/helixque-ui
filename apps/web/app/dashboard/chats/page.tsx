@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useEffect, useRef, useCallback } from "react"
 import { MessageCircle, Search, Send } from "lucide-react"
 import { Avatar, AvatarImage, AvatarFallback } from "@workspace/ui/components/avatar"
 import { Input } from "@workspace/ui/components/input"
@@ -66,12 +66,18 @@ export default function ChatsPage() {
     loadingOlderMessages,
     searchQuery,
     isLoadingMore,
+    selectedChat,
+    displayedChats,
     setLoadingOlderMessages,
     setSearchQuery,
-    setIsLoadingMore
+    setIsLoadingMore,
+    setSelectedChat,
+    setDisplayedChats
   } = useHelixque()
-  const [selectedChat, setSelectedChat] = useState<typeof allChats[0] | null>(null)
-  const [displayedChats, setDisplayedChats] = useState<typeof allChats>(allChats.slice(0, 10))
+
+  useEffect(() => {
+    setDisplayedChats(allChats.slice(0, 10));
+  }, [setDisplayedChats]);
   const chatListRef = useRef<HTMLDivElement>(null)
   const messagesRef = useRef<HTMLDivElement>(null)
   const loadMoreTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -219,7 +225,7 @@ export default function ChatsPage() {
                   </div>
                 </div>
               )}
-              {selectedChat.messages.map((message) => (
+              {selectedChat?.messages.map((message: any) => (
                 <div
                   key={message.id}
                   className={`flex ${

@@ -735,12 +735,19 @@ export function SettingsDialog({
   const {
     activeSection,
     hasChanges,
+    states,
     setActiveSection,
-    setHasChanges
+    setHasChanges,
+    setStates
   } = useHelixque();
-  const [states, setStates] = React.useState(initialStates)
-
-  const currentState = React.useMemo(() => states[activeSection as keyof typeof states] || {}, [states, activeSection])
+  
+  React.useEffect(() => {
+    setStates(initialStates);
+  }, [])
+  const currentState = React.useMemo(
+    () => (states?.[activeSection] ?? {}),
+    [states, activeSection]
+  )  
   const initialState = React.useMemo(() => initialStates[activeSection as keyof typeof initialStates] || {}, [activeSection])
 
   // Check if current state has changes from initial state

@@ -14,10 +14,11 @@ const NavigationContext = React.createContext<NavigationContextType | undefined>
 )
 
 export function NavigationProvider({ children }: { children: React.ReactNode }) {
-  const [activeSection, setActiveSectionState] = React.useState("Playground")
   const {
     activeSubSection,
-    setActiveSubSection
+    activeSection,
+    setActiveSubSection,
+    setActiveSectionState
   } = useHelixque()
 
   const setActiveSection = React.useCallback((section: string, subSection?: string | null) => {
