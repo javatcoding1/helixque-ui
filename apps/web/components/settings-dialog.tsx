@@ -43,6 +43,7 @@ import {
 import { Button } from "@workspace/ui/components/button"
 import { Label } from "@workspace/ui/components/label"
 import { Input } from "@workspace/ui/components/input"
+import { useHelixque } from "@workspace/state"
 
 const data = {
   nav: [
@@ -731,9 +732,13 @@ export function SettingsDialog({
   open?: boolean
   onOpenChange?: (open: boolean) => void
 }) {
-  const [activeSection, setActiveSection] = React.useState("Notifications")
+  const {
+    activeSection,
+    hasChanges,
+    setActiveSection,
+    setHasChanges
+  } = useHelixque();
   const [states, setStates] = React.useState(initialStates)
-  const [hasChanges, setHasChanges] = React.useState(false)
 
   const currentState = React.useMemo(() => states[activeSection as keyof typeof states] || {}, [states, activeSection])
   const initialState = React.useMemo(() => initialStates[activeSection as keyof typeof initialStates] || {}, [activeSection])

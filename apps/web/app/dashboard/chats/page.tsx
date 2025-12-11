@@ -6,6 +6,7 @@ import { MessageCircle, Search, Send } from "lucide-react"
 import { Avatar, AvatarImage, AvatarFallback } from "@workspace/ui/components/avatar"
 import { Input } from "@workspace/ui/components/input"
 import { Button } from "@workspace/ui/components/button"
+import { useHelixque } from "@workspace/state"
 
 // Generate mock chats with proper avatars and data like friends page
 const generateMockChats = () => {
@@ -61,11 +62,16 @@ const generateMockChats = () => {
 const allChats = generateMockChats()
 
 export default function ChatsPage() {
+  const {
+    loadingOlderMessages,
+    searchQuery,
+    isLoadingMore,
+    setLoadingOlderMessages,
+    setSearchQuery,
+    setIsLoadingMore
+  } = useHelixque()
   const [selectedChat, setSelectedChat] = useState<typeof allChats[0] | null>(null)
   const [displayedChats, setDisplayedChats] = useState<typeof allChats>(allChats.slice(0, 10))
-  const [isLoadingMore, setIsLoadingMore] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [loadingOlderMessages, setLoadingOlderMessages] = useState(false)
   const chatListRef = useRef<HTMLDivElement>(null)
   const messagesRef = useRef<HTMLDivElement>(null)
   const loadMoreTimerRef = useRef<NodeJS.Timeout | null>(null)

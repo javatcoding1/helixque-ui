@@ -1,0 +1,23 @@
+{
+  "name": "@workspace/state",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/store.ts",
+  "types": "src/store.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.4.1",
+  "dependencies": {
+    "react": "19.2.1",
+    "typescript": "^5.9.3",
+    "zustand": "^5.0.9"
+  },
+  "devDependencies": {
+    "@workspace/eslint-config": "workspace:*",
+    "@workspace/typescript-config": "workspace:*"
+  }
+}

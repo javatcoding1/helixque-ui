@@ -20,6 +20,7 @@ import * as ReactDOM from "react-dom";
 import { Button } from "@workspace/ui/components/button";
 import { useComposedRefs } from "@workspace/ui/lib/compose-refs";
 import { cn } from "@workspace/ui/lib/utils";
+import { useHelixque } from "@workspace/state";
 
 const ROOT_NAME = "Tour";
 const PORTAL_NAME = "TourPortal";
@@ -758,7 +759,10 @@ function TourRootImpl(props: TourRootImplProps) {
   const store = useStoreContext("TourRootImpl");
   const dir = useDirection(dirProp);
 
-  const [portal, setPortal] = React.useState<HTMLElement | null>(null);
+  const {
+    portal,
+    setPortal
+  } = useHelixque()
   const previouslyFocusedElementRef = React.useRef<HTMLElement | null>(null);
 
   const onEscapeKeyDownRef = useAsRef(onEscapeKeyDown);
@@ -916,8 +920,12 @@ function TourStep(props: TourStepProps) {
 
   const store = useStoreContext(STEP_NAME);
 
-  const [arrow, setArrow] = React.useState<HTMLSpanElement | null>(null);
-  const [footer, setFooter] = React.useState<FooterElement | null>(null);
+  const {
+    arrow,
+    footer,
+    setArrow,
+    setFooter
+  } = useHelixque()
 
   const stepRef = React.useRef<StepElement | null>(null);
   const stepIdRef = React.useRef<string>("");
@@ -1381,7 +1389,10 @@ function TourPortal(props: TourPortalProps) {
 
   const portalContext = usePortalContext(PORTAL_NAME);
 
-  const [mounted, setMounted] = React.useState(false);
+  const {
+    mounted,
+    setMounted
+  } = useHelixque();
 
   useIsomorphicLayoutEffect(() => {
     setMounted(true);
