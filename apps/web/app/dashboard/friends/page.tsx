@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { useMemo } from "react"
-import { useNavigation } from "@/contexts/navigation-context"
+import * as React from "react";
+import { useMemo } from "react";
+import { useNavigation } from "@/contexts/navigation-context";
 import {
   IconPhoneCall,
   IconMessage,
@@ -18,19 +18,23 @@ import {
   IconChevronRight,
   IconCircleCheckFilled,
   IconLoader,
-} from "@tabler/icons-react"
-import { Button } from "@workspace/ui/components/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@workspace/ui/components/avatar"
-import { Input } from "@workspace/ui/components/input"
-import { LoaderIcon } from "lucide-react"
-import { cn } from "@workspace/ui/lib/utils"
+} from "@tabler/icons-react";
+import { Button } from "@workspace/ui/components/button";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@workspace/ui/components/avatar";
+import { Input } from "@workspace/ui/components/input";
+import { LoaderIcon } from "lucide-react";
+import { cn } from "@workspace/ui/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu"
-import { useHelixque } from "@workspace/state"
+} from "@workspace/ui/components/dropdown-menu";
+import { useHelixque } from "@workspace/state";
 
 function Spinner({ className, ...props }: React.ComponentProps<"svg">) {
   return (
@@ -40,7 +44,7 @@ function Spinner({ className, ...props }: React.ComponentProps<"svg">) {
       className={cn("size-4 animate-spin", className)}
       {...props}
     />
-  )
+  );
 }
 
 function SpinnerCustom() {
@@ -48,17 +52,49 @@ function SpinnerCustom() {
     <div className="flex items-center gap-4">
       <Spinner />
     </div>
-  )
+  );
 }
 
 // Mock data - with more records for pagination
 const generateMockFriends = () => {
-  const names = ["Sarah", "John", "Emma", "Michael", "Jessica", "David", "Alex", "Lisa", "Mark", "Sophie", "James", "Rachel", "Daniel", "Nina", "Chris"]
-  const surnames = ["Anderson", "Doe", "Wilson", "Chen", "Brown", "Martinez", "Thompson", "Wong", "Johnson", "Laurent", "Smith", "Davis", "Miller", "Taylor", "White"]
-  const statuses = ["online", "offline"]
-  const availabilities = ["available", "busy"]
-  
-  const friends = []
+  const names = [
+    "Sarah",
+    "John",
+    "Emma",
+    "Michael",
+    "Jessica",
+    "David",
+    "Alex",
+    "Lisa",
+    "Mark",
+    "Sophie",
+    "James",
+    "Rachel",
+    "Daniel",
+    "Nina",
+    "Chris",
+  ];
+  const surnames = [
+    "Anderson",
+    "Doe",
+    "Wilson",
+    "Chen",
+    "Brown",
+    "Martinez",
+    "Thompson",
+    "Wong",
+    "Johnson",
+    "Laurent",
+    "Smith",
+    "Davis",
+    "Miller",
+    "Taylor",
+    "White",
+  ];
+  const statuses = ["online", "offline"];
+  const availabilities = ["available", "busy"];
+
+  const friends = [];
   for (let i = 1; i <= 30; i++) {
     friends.push({
       id: i,
@@ -66,12 +102,15 @@ const generateMockFriends = () => {
       displayName: `@user${i}`,
       avatar: `https://github.com/shadcn.png`,
       status: statuses[Math.floor(Math.random() * statuses.length)],
-      availability: availabilities[Math.floor(Math.random() * availabilities.length)],
-      lastSeen: ["Active now", "2 hours ago", "Yesterday", "2 days ago"][Math.floor(Math.random() * 4)],
-    })
+      availability:
+        availabilities[Math.floor(Math.random() * availabilities.length)],
+      lastSeen: ["Active now", "2 hours ago", "Yesterday", "2 days ago"][
+        Math.floor(Math.random() * 4)
+      ],
+    });
   }
-  return friends
-}
+  return friends;
+};
 
 const mockFriendsData = {
   friends: generateMockFriends(),
@@ -115,34 +154,34 @@ const mockFriendsData = {
       receivedAt: "1 day ago",
     },
   ],
-}
+};
 
-type TabType = "friends" | "sent" | "received"
+type TabType = "friends" | "sent" | "received";
 
 // Fuzzy search function
 function fuzzySearch(haystack: string, needle: string): boolean {
-  let haystackIdx = 0
-  let needleIdx = 0
-  const haystackLen = haystack.length
-  const needleLen = needle.length
+  let haystackIdx = 0;
+  let needleIdx = 0;
+  const haystackLen = haystack.length;
+  const needleLen = needle.length;
 
-  if (needleLen > haystackLen) return false
-  if (needleLen === haystackLen) return haystack === needle
+  if (needleLen > haystackLen) return false;
+  if (needleLen === haystackLen) return haystack === needle;
 
   outer: while (needleIdx < needleLen) {
-    const needleChar = needle[needleIdx]!
+    const needleChar = needle[needleIdx]!;
     while (haystackIdx < haystackLen) {
-      const haystackChar = haystack[haystackIdx]!
+      const haystackChar = haystack[haystackIdx]!;
       if (haystackChar.toLowerCase() === needleChar.toLowerCase()) {
-        haystackIdx++
-        needleIdx++
-        continue outer
+        haystackIdx++;
+        needleIdx++;
+        continue outer;
       }
-      haystackIdx++
+      haystackIdx++;
     }
-    return false
+    return false;
   }
-  return true
+  return true;
 }
 
 interface Friend {
@@ -159,25 +198,20 @@ interface Friend {
 
 interface FriendCardProps {
   friend: Friend;
-  type: TabType
-  isLoading?: boolean
-  onAction?: (id: number, action: string) => void
+  type: TabType;
+  isLoading?: boolean;
+  onAction?: (id: number, action: string) => void;
 }
 
 function FriendCard({ friend, type, onAction }: FriendCardProps) {
-  const isOnline = friend.status === "online"
-  const isBusy = friend.availability === "busy"
+  const isOnline = friend.status === "online";
+  const isBusy = friend.availability === "busy";
 
   const renderActions = () => {
     if (type === "friends") {
       return (
         <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-8 px-2"
-            title="Call"
-          >
+          <Button size="sm" variant="ghost" className="h-8 px-2" title="Call">
             <IconPhoneCall className="h-4 w-4" />
           </Button>
           <Button
@@ -219,7 +253,7 @@ function FriendCard({ friend, type, onAction }: FriendCardProps) {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-      )
+      );
     }
 
     if (type === "sent") {
@@ -234,7 +268,7 @@ function FriendCard({ friend, type, onAction }: FriendCardProps) {
             Cancel
           </Button>
         </div>
-      )
+      );
     }
 
     if (type === "received") {
@@ -257,9 +291,9 @@ function FriendCard({ friend, type, onAction }: FriendCardProps) {
             <IconX className="h-4 w-4" />
           </Button>
         </div>
-      )
+      );
     }
-  }
+  };
 
   const renderMeta = () => {
     if (type === "friends") {
@@ -276,9 +310,11 @@ function FriendCard({ friend, type, onAction }: FriendCardProps) {
               <span>Offline</span>
             </div>
           )}
-          <span className="text-xs text-muted-foreground">{friend.lastSeen}</span>
+          <span className="text-xs text-muted-foreground">
+            {friend.lastSeen}
+          </span>
         </div>
-      )
+      );
     }
 
     if (type === "sent") {
@@ -286,7 +322,7 @@ function FriendCard({ friend, type, onAction }: FriendCardProps) {
         <div className="text-xs text-muted-foreground mt-1">
           Sent {friend.sentAt}
         </div>
-      )
+      );
     }
 
     if (type === "received") {
@@ -294,9 +330,9 @@ function FriendCard({ friend, type, onAction }: FriendCardProps) {
         <div className="text-xs text-muted-foreground mt-1">
           Requested {friend.receivedAt}
         </div>
-      )
+      );
     }
-  }
+  };
 
   return (
     <div className="flex items-center justify-between gap-4 p-4 rounded-xl bg-card hover:shadow-sm transition-shadow duration-200 border border-border/50">
@@ -304,7 +340,12 @@ function FriendCard({ friend, type, onAction }: FriendCardProps) {
         <div className="relative flex-shrink-0">
           <Avatar className="h-12 w-12">
             <AvatarImage src={friend.avatar} alt={friend.name} />
-            <AvatarFallback>{friend.name.split(" ").map((n: string) => n[0]).join("")}</AvatarFallback>
+            <AvatarFallback>
+              {friend.name
+                .split(" ")
+                .map((n: string) => n[0])
+                .join("")}
+            </AvatarFallback>
           </Avatar>
           {isOnline && (
             <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background bg-green-500" />
@@ -313,22 +354,20 @@ function FriendCard({ friend, type, onAction }: FriendCardProps) {
 
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-sm leading-tight">{friend.name}</h3>
-          <p className="text-xs text-muted-foreground truncate">{friend.displayName}</p>
-          <div className="mt-1">
-            {renderMeta()}
-          </div>
+          <p className="text-xs text-muted-foreground truncate">
+            {friend.displayName}
+          </p>
+          <div className="mt-1">{renderMeta()}</div>
         </div>
       </div>
 
-      <div className="flex-shrink-0">
-        {renderActions()}
-      </div>
+      <div className="flex-shrink-0">{renderActions()}</div>
     </div>
-  )
+  );
 }
 
 export default function FriendsPage() {
-  const { setActiveSection } = useNavigation()
+  const { setActiveSection } = useNavigation();
   const {
     activeTab,
     searchQuery,
@@ -337,31 +376,31 @@ export default function FriendsPage() {
     setActiveTab,
     setSearchQuery,
     setCurrentPage,
-    setIsLoading
+    setIsLoading,
   } = useHelixque();
-  const itemsPerPage = 6
+  const itemsPerPage = 6;
 
   React.useEffect(() => {
-    setActiveSection("Friends", null)
-  }, [setActiveSection])
+    setActiveSection("Friends", null);
+  }, [setActiveSection]);
 
   React.useEffect(() => {
     // Simulate lazy loading when tab changes
-    setIsLoading(true)
-    setCurrentPage(1)
-    setSearchQuery("")
-    
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 300)
+    setIsLoading(true);
+    setCurrentPage(1);
+    setSearchQuery("");
 
-    return () => clearTimeout(timer)
-  }, [activeTab])
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [activeTab]);
 
   const handleAction = (id: number, action: string) => {
-    console.log(`Action: ${action} on user ${id}`)
+    console.log(`Action: ${action} on user ${id}`);
     // Implement actual actions here
-  }
+  };
 
   const getTabs = () => {
     return [
@@ -383,29 +422,29 @@ export default function FriendsPage() {
         count: mockFriendsData.received.length,
         data: mockFriendsData.received,
       },
-    ]
-  }
+    ];
+  };
 
-  const tabs = getTabs()
+  const tabs = getTabs();
   // Move currentTabData inside useMemo
   const filteredData = useMemo(() => {
-    const currentTabData = tabs.find(t => t.id === activeTab)?.data || []
-    if (!searchQuery.trim()) return currentTabData
-    return currentTabData.filter(friend =>
+    const currentTabData = tabs.find((t) => t.id === activeTab)?.data || [];
+    if (!searchQuery.trim()) return currentTabData;
+    return currentTabData.filter((friend) =>
       fuzzySearch(
         `${friend.name} ${friend.displayName}`.toLowerCase(),
-        searchQuery.toLowerCase()
-      )
-    )
-  }, [tabs, activeTab, searchQuery])
+        searchQuery.toLowerCase(),
+      ),
+    );
+  }, [tabs, activeTab, searchQuery]);
 
   // Paginate filtered data
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage)
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const paginatedData = useMemo(() => {
-    const startIdx = (currentPage - 1) * itemsPerPage
-    const endIdx = startIdx + itemsPerPage
-    return filteredData.slice(startIdx, endIdx)
-  }, [filteredData, currentPage])
+    const startIdx = (currentPage - 1) * itemsPerPage;
+    const endIdx = startIdx + itemsPerPage;
+    return filteredData.slice(startIdx, endIdx);
+  }, [filteredData, currentPage]);
 
   return (
     <div className="flex flex-col gap-6 pb-6">
@@ -448,8 +487,8 @@ export default function FriendsPage() {
           className="pl-9"
           value={searchQuery}
           onChange={(e) => {
-            setSearchQuery(e.target.value)
-            setCurrentPage(1)
+            setSearchQuery(e.target.value);
+            setCurrentPage(1);
           }}
         />
       </div>
@@ -459,7 +498,9 @@ export default function FriendsPage() {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <SpinnerCustom />
-            <p className="text-sm text-muted-foreground mt-4">Loading friends...</p>
+            <p className="text-sm text-muted-foreground mt-4">
+              Loading friends...
+            </p>
           </div>
         ) : paginatedData.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -468,19 +509,19 @@ export default function FriendsPage() {
               {searchQuery
                 ? "No results found"
                 : activeTab === "friends"
-                ? "No friends yet"
-                : activeTab === "sent"
-                ? "No pending requests"
-                : "No incoming requests"}
+                  ? "No friends yet"
+                  : activeTab === "sent"
+                    ? "No pending requests"
+                    : "No incoming requests"}
             </h3>
             <p className="text-sm text-muted-foreground mt-1">
               {searchQuery
                 ? "Try adjusting your search"
                 : activeTab === "friends"
-                ? "Start connecting with people to see them here"
-                : activeTab === "sent"
-                ? "All your requests have been responded to"
-                : "You're all caught up!"}
+                  ? "Start connecting with people to see them here"
+                  : activeTab === "sent"
+                    ? "All your requests have been responded to"
+                    : "You're all caught up!"}
             </p>
           </div>
         ) : (
@@ -501,29 +542,36 @@ export default function FriendsPage() {
       {!isLoading && filteredData.length > 0 && (
         <div className="flex items-center justify-between pt-4 border-t border-border">
           <div className="text-sm text-muted-foreground">
-            Showing {Math.min((currentPage - 1) * itemsPerPage + 1, filteredData.length)} to{" "}
-            {Math.min(currentPage * itemsPerPage, filteredData.length)} of {filteredData.length}
+            Showing{" "}
+            {Math.min(
+              (currentPage - 1) * itemsPerPage + 1,
+              filteredData.length,
+            )}{" "}
+            to {Math.min(currentPage * itemsPerPage, filteredData.length)} of{" "}
+            {filteredData.length}
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
             >
               <IconChevronLeft className="h-4 w-4 mr-1" />
               Previous
             </Button>
-            
+
             <div className="px-3 py-1 text-sm font-medium">
               Page {currentPage} of {totalPages || 1}
             </div>
-            
+
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
               disabled={currentPage >= totalPages}
             >
               Next
@@ -533,5 +581,5 @@ export default function FriendsPage() {
         </div>
       )}
     </div>
-  )
+  );
 }

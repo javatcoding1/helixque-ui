@@ -759,10 +759,7 @@ function TourRootImpl(props: TourRootImplProps) {
   const store = useStoreContext("TourRootImpl");
   const dir = useDirection(dirProp);
 
-  const {
-    portal,
-    setPortal
-  } = useHelixque()
+  const { portal, setPortal } = useHelixque();
   const previouslyFocusedElementRef = React.useRef<HTMLElement | null>(null);
 
   const onEscapeKeyDownRef = useAsRef(onEscapeKeyDown);
@@ -920,12 +917,7 @@ function TourStep(props: TourStepProps) {
 
   const store = useStoreContext(STEP_NAME);
 
-  const {
-    arrow,
-    footer,
-    setArrow,
-    setFooter
-  } = useHelixque()
+  const { arrow, footer, setArrow, setFooter } = useHelixque();
 
   const stepRef = React.useRef<StepElement | null>(null);
   const stepIdRef = React.useRef<string>("");
@@ -1389,10 +1381,7 @@ function TourPortal(props: TourPortalProps) {
 
   const portalContext = usePortalContext(PORTAL_NAME);
 
-  const {
-    mounted,
-    setMounted
-  } = useHelixque();
+  const { mounted, setMounted } = useHelixque();
 
   useIsomorphicLayoutEffect(() => {
     setMounted(true);
