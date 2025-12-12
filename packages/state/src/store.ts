@@ -155,7 +155,7 @@ interface actions {
   setPeerMicOn: (value: boolean | ((prev: boolean) => boolean)) => void;
   setPeerCamOn: (value: boolean | ((prev: boolean) => boolean)) => void;
   setPeerScreenShareOn: (value: boolean | ((prev: boolean) => boolean)) => void;
-  setShowChat: (value: boolean) => void;
+  setShowChat: (value: boolean | ((prev: boolean) => boolean)) => void;
   setRoomId: (value: string | null) => void;
   setMySocketId: (value: string | null) => void;
   setLobby: (value: boolean) => void;
@@ -300,7 +300,10 @@ export const useHelixque = create<state & actions>((set) => ({
       peerScreenShareOn:
         typeof value === "function" ? value(s.peerScreenShareOn) : value,
     })),
-  setShowChat: (value) => set({ showChat: value }),
+  setShowChat: (value) =>
+    set((state) => ({
+      showChat: typeof value === "function" ? value(state.showChat) : value,
+    })),
   setRoomId: (value) => set({ roomId: value }),
   setMySocketId: (value) => set({ mySocketId: value }),
   setLobby: (value) => set({ lobby: value }),
