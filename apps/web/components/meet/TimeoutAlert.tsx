@@ -35,12 +35,16 @@ export default function TimeoutAlert({
             <IconFlag className="h-6 w-6 text-orange-400" />
           </div>
 
-          <h3 id="timeout-title" className="mb-2 text-lg font-semibold text-white">
+          <h3
+            id="timeout-title"
+            className="mb-2 text-lg font-semibold text-white"
+          >
             No Match Found
           </h3>
 
           <p className="mb-6 text-sm text-neutral-400">
-            {message || "We couldn't find a match right now. Please try again later."}
+            {message ||
+              "We couldn't find a match right now. Please try again later."}
           </p>
 
           <div className="flex gap-3">
@@ -52,11 +56,7 @@ export default function TimeoutAlert({
             >
               Try Again
             </Button>
-            <Button
-              onClick={onCancel}
-              className="flex-1"
-              variant="outline"
-            >
+            <Button onClick={onCancel} className="flex-1" variant="outline">
               Cancel
             </Button>
           </div>

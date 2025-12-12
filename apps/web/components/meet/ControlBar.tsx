@@ -81,10 +81,16 @@ export default function ControlBar({
                     : "bg-red-600 text-white hover:bg-red-500"
                 }`}
               >
-                {micOn ? <IconMicrophone className="h-5 w-5" /> : <IconMicrophoneOff className="h-5 w-5" />}
+                {micOn ? (
+                  <IconMicrophone className="h-5 w-5" />
+                ) : (
+                  <IconMicrophoneOff className="h-5 w-5" />
+                )}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>{micOn ? "Turn off microphone" : "Turn on microphone"}</TooltipContent>
+            <TooltipContent>
+              {micOn ? "Turn off microphone" : "Turn on microphone"}
+            </TooltipContent>
           </Tooltip>
 
           <Tooltip>
@@ -99,10 +105,16 @@ export default function ControlBar({
                     : "bg-red-600 text-white hover:bg-red-500"
                 }`}
               >
-                {camOn ? <IconVideo className="h-5 w-5" /> : <IconVideoOff className="h-5 w-5" />}
+                {camOn ? (
+                  <IconVideo className="h-5 w-5" />
+                ) : (
+                  <IconVideoOff className="h-5 w-5" />
+                )}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>{camOn ? "Turn off camera" : "Turn on camera"}</TooltipContent>
+            <TooltipContent>
+              {camOn ? "Turn off camera" : "Turn on camera"}
+            </TooltipContent>
           </Tooltip>
 
           <Tooltip>
@@ -124,7 +136,9 @@ export default function ControlBar({
                 )}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>{screenShareOn ? "Stop screen share" : "Start screen share"}</TooltipContent>
+            <TooltipContent>
+              {screenShareOn ? "Stop screen share" : "Start screen share"}
+            </TooltipContent>
           </Tooltip>
 
           <Tooltip>
@@ -149,7 +163,9 @@ export default function ControlBar({
                 className="flex h-11 items-center gap-2 rounded-full px-6"
               >
                 <IconPhoneOff className="h-5 w-5" />
-                <span className="hidden text-sm font-medium sm:inline">Leave</span>
+                <span className="hidden text-sm font-medium sm:inline">
+                  Leave
+                </span>
               </Button>
             </TooltipTrigger>
             <TooltipContent>Leave call</TooltipContent>
@@ -173,7 +189,9 @@ export default function ControlBar({
                   <IconMessage className="h-5 w-5" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>{showChat ? "Close chat" : "Open chat"}</TooltipContent>
+              <TooltipContent>
+                {showChat ? "Close chat" : "Open chat"}
+              </TooltipContent>
             </Tooltip>
 
             <Tooltip>

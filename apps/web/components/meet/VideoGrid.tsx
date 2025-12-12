@@ -121,7 +121,9 @@ export default function VideoGrid({
   return (
     <div
       className={`grid h-full gap-4 transition-all duration-300 ${
-        showChat ? "grid-cols-1 grid-rows-2 max-w-none" : "grid-cols-1 sm:grid-cols-2 grid-rows-1"
+        showChat
+          ? "grid-cols-1 grid-rows-2 max-w-none"
+          : "grid-cols-1 sm:grid-cols-2 grid-rows-1"
       }`}
     >
       <div
@@ -129,7 +131,9 @@ export default function VideoGrid({
           showChat ? "mx-auto aspect-[4/3] max-w-2xl" : ""
         }`}
       >
-        <div className={`relative w-full ${showChat ? "h-full" : "h-full min-h-0"}`}>
+        <div
+          className={`relative w-full ${showChat ? "h-full" : "h-full min-h-0"}`}
+        >
           <video
             ref={remoteVideoRef}
             autoPlay
@@ -175,7 +179,9 @@ export default function VideoGrid({
           showChat ? "mx-auto aspect-[4/3] max-w-2xl" : ""
         }`}
       >
-        <div className={`relative w-full ${showChat ? "h-full" : "h-full min-h-0"}`}>
+        <div
+          className={`relative w-full ${showChat ? "h-full" : "h-full min-h-0"}`}
+        >
           <video
             ref={localVideoRef}
             autoPlay

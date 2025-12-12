@@ -3,8 +3,12 @@
 import { useState } from "react";
 
 export function useMediaState(audioOn?: boolean, videoOn?: boolean) {
-  const [micOn, setMicOn] = useState<boolean>(typeof audioOn === "boolean" ? audioOn : true);
-  const [camOn, setCamOn] = useState<boolean>(typeof videoOn === "boolean" ? videoOn : true);
+  const [micOn, setMicOn] = useState<boolean>(
+    typeof audioOn === "boolean" ? audioOn : true,
+  );
+  const [camOn, setCamOn] = useState<boolean>(
+    typeof videoOn === "boolean" ? videoOn : true,
+  );
   const [screenShareOn, setScreenShareOn] = useState(false);
 
   return {
@@ -37,7 +41,9 @@ export function useRoomState() {
   const [roomId, setRoomId] = useState<string | null>(null);
   const [mySocketId, setMySocketId] = useState<string | null>(null);
   const [lobby, setLobby] = useState(true);
-  const [status, setStatus] = useState<string>("Waiting to connect you to someone…");
+  const [status, setStatus] = useState<string>(
+    "Waiting to connect you to someone…",
+  );
   const [showTimeoutAlert, setShowTimeoutAlert] = useState(false);
   const [timeoutMessage, setTimeoutMessage] = useState("");
 
