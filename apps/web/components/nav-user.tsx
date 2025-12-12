@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import {
   BadgeCheck,
   Bell,
@@ -9,14 +9,14 @@ import {
   LogOut,
   Settings,
   Sparkles,
-} from "lucide-react"
-import { SettingsDialog } from "./settings-dialog"
+} from "lucide-react";
+import { SettingsDialog } from "./settings-dialog";
 
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@workspace/ui/components/avatar"
+} from "@workspace/ui/components/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,25 +25,26 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu"
+} from "@workspace/ui/components/dropdown-menu";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@workspace/ui/components/sidebar"
+} from "@workspace/ui/components/sidebar";
+import { useHelixque } from "@workspace/state";
 
 export function NavUser({
   user,
 }: {
   user: {
-    name: string
-    email: string
-    avatar: string
-  }
+    name: string;
+    email: string;
+    avatar: string;
+  };
 }) {
-  const { isMobile } = useSidebar()
-  const [settingsOpen, setSettingsOpen] = React.useState(false)
+  const { isMobile } = useSidebar();
+  const { settingsOpen, setSettingsOpen } = useHelixque();
 
   return (
     <SidebarMenu>
@@ -119,5 +120,5 @@ export function NavUser({
       </SidebarMenuItem>
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </SidebarMenu>
-  )
+  );
 }
