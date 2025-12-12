@@ -4,6 +4,13 @@ import React from "react";
 type activeTabType = "friends" | "sent" | "received";
 type activeSectionType = "Notifications" | "Playground" | "received" | string;
 type Team = { name: string; logo: React.ElementType; plan: string } | null;
+type ChatMessage = {
+  text: string;
+  from: string;
+  clientId: string;
+  ts: number;
+  kind?: "user" | "system";
+};
 const initialStates = {
   Notifications: {
     emailNotif: true,
@@ -91,6 +98,24 @@ interface state {
   joined: boolean;
   videoOn: boolean;
   audioOn: boolean;
+  micOn: boolean;
+  camOn: boolean;
+  screenShareOn: boolean;
+  peerMicOn: boolean;
+  peerCamOn: boolean;
+  peerScreenShareOn: boolean;
+  showChat: boolean;
+  roomId: string | null;
+  mySocketId: string | null;
+  lobby: boolean;
+  status: string;
+  showTimeoutAlert: boolean;
+  timeoutMessage: string;
+  cursorPosition: number;
+  emojiPickerOpen: boolean;
+  peerTyping: string | null;
+  input: string;
+  messages: ChatMessage[];
 }
 
 interface actions {
@@ -124,6 +149,26 @@ interface actions {
   setJoined: (value: boolean) => void;
   setVideoOn: (value: boolean | ((prev: boolean) => boolean)) => void;
   setAudioOn: (value: boolean | ((prev: boolean) => boolean)) => void;
+  setMicOn: (value: boolean | ((prev: boolean) => boolean)) => void;
+  setCamOn: (value: boolean | ((prev: boolean) => boolean)) => void;
+  setScreenShareOn: (value: boolean | ((prev: boolean) => boolean)) => void;
+  setPeerMicOn: (value: boolean | ((prev: boolean) => boolean)) => void;
+  setPeerCamOn: (value: boolean | ((prev: boolean) => boolean)) => void;
+  setPeerScreenShareOn: (value: boolean | ((prev: boolean) => boolean)) => void;
+  setShowChat: (value: boolean) => void;
+  setRoomId: (value: string | null) => void;
+  setMySocketId: (value: string | null) => void;
+  setLobby: (value: boolean) => void;
+  setStatus: (value: string) => void;
+  setShowTimeoutAlert: (value: boolean) => void;
+  setTimeoutMessage: (value: string) => void;
+  setCursorPosition: (value: number) => void;
+  setEmojiPickerOpen: (value: boolean) => void;
+  setInput: (value: string) => void;
+  setPeerTyping: (value: string | null) => void;
+  setMessages: (
+    value: ChatMessage[] | ((prev: ChatMessage[]) => ChatMessage[]),
+  ) => void;
 }
 
 export const useHelixque = create<state & actions>((set) => ({
@@ -156,6 +201,24 @@ export const useHelixque = create<state & actions>((set) => ({
   joined: false,
   videoOn: true,
   audioOn: true,
+  micOn: true,
+  camOn: true,
+  screenShareOn: false,
+  peerMicOn: true,
+  peerCamOn: true,
+  peerScreenShareOn: false,
+  showChat: false,
+  roomId: null,
+  mySocketId: null,
+  lobby: true,
+  status: "Waiting to connect you to someone…",
+  showTimeoutAlert: false,
+  timeoutMessage: "",
+  cursorPosition: 0,
+  emojiPickerOpen: false,
+  input: "",
+  peerTyping: null,
+  messages: [],
   setTourOpen: (value: boolean) => set({ tourOpen: value }),
   setLoadingOlderMessages: (value: boolean) =>
     set({ loadingOlderMessages: value }),
@@ -210,5 +273,46 @@ export const useHelixque = create<state & actions>((set) => ({
   setAudioOn: (value) =>
     set((state) => ({
       audioOn: typeof value === "function" ? value(state.audioOn) : value,
+    })),
+  setMicOn: (value) =>
+    set((s) => ({
+      micOn: typeof value === "function" ? value(s.micOn) : value,
+    })),
+  setCamOn: (value) =>
+    set((s) => ({
+      camOn: typeof value === "function" ? value(s.camOn) : value,
+    })),
+  setScreenShareOn: (value) =>
+    set((s) => ({
+      screenShareOn:
+        typeof value === "function" ? value(s.screenShareOn) : value,
+    })),
+  setPeerMicOn: (value) =>
+    set((s) => ({
+      peerMicOn: typeof value === "function" ? value(s.peerMicOn) : value,
+    })),
+  setPeerCamOn: (value) =>
+    set((s) => ({
+      peerCamOn: typeof value === "function" ? value(s.peerCamOn) : value,
+    })),
+  setPeerScreenShareOn: (value) =>
+    set((s) => ({
+      peerScreenShareOn:
+        typeof value === "function" ? value(s.peerScreenShareOn) : value,
+    })),
+  setShowChat: (value) => set({ showChat: value }),
+  setRoomId: (value) => set({ roomId: value }),
+  setMySocketId: (value) => set({ mySocketId: value }),
+  setLobby: (value) => set({ lobby: value }),
+  setStatus: (value) => set({ status: value }),
+  setShowTimeoutAlert: (value) => set({ showTimeoutAlert: value }),
+  setTimeoutMessage: (value) => set({ timeoutMessage: value }),
+  setCursorPosition: (value: number) => set({ cursorPosition: value }),
+  setEmojiPickerOpen: (value) => set({ emojiPickerOpen: value }),
+  setInput: (value) => set({ input: value }),
+  setPeerTyping: (value) => set({ peerTyping: value }),
+  setMessages: (value) =>
+    set((state) => ({
+      messages: typeof value === "function" ? value(state.messages) : value,
     })),
 }));

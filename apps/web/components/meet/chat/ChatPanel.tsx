@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import type { Socket } from "socket.io-client";
 import { toast } from "sonner";
 import EmojiPicker, { Theme, type EmojiClickData } from "emoji-picker-react";
 import { IconMoodSmile } from "@tabler/icons-react";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
+import { useHelixque } from "@workspace/state";
 
 type ChatMessage = {
   text: string;
@@ -37,11 +38,18 @@ export default function ChatPanel({
   collapsed = false,
   isOpen = false,
 }: ChatPanelProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState("");
-  const [peerTyping, setPeerTyping] = useState<string | null>(null);
-  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
-  const [cursorPosition, setCursorPosition] = useState(0);
+  const {
+    cursorPosition,
+    emojiPickerOpen,
+    input,
+    peerTyping,
+    messages,
+    setCursorPosition,
+    setEmojiPickerOpen,
+    setInput,
+    setPeerTyping,
+    setMessages,
+  } = useHelixque();
 
   const scrollerRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
