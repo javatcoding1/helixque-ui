@@ -47,6 +47,7 @@ export function NavProjects({
             <SidebarMenuButton
               isActive={activeSection === item.name}
               onClick={() => setActiveSection(item.name)}
+              tooltip={item.name}
             >
               <item.icon />
               <span>{item.name}</span>

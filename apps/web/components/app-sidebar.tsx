@@ -1,29 +1,40 @@
 "use client"
 
 import * as React from "react"
+import Image from "next/image"
 import {
   AudioWaveform,
   BookOpen,
   Bot,
   Command,
   Frame,
-  GalleryVerticalEnd,
   Map,
+  MessageCircle,
+  Users,
+  Heart,
+  Handshake,
+  Award,
   PieChart,
   Settings2,
   SquareTerminal,
+  Zap,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
-import { NavProjects } from "@/components/nav-projects"
+import { NavProFeatures } from "@/components/nav-pro-features"
+import { NavSocials } from "@/components/nav-socials"
+import { NavConnect } from "@/components/nav-connect"
 import { NavUser } from "@/components/nav-user"
-import { TeamSwitcher } from "@/components/team-switcher"
+// import { TeamSwitcher } from "@/components/team-switcher"
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
 } from "@workspace/ui/components/sidebar"
 
 // This is sample data.
@@ -36,7 +47,7 @@ const data = {
   teams: [
     {
       name: "Acme Inc",
-      logo: GalleryVerticalEnd,
+      logo: "https://www.helixque.com/logo.svg",
       plan: "Enterprise",
     },
     {
@@ -154,17 +165,95 @@ const data = {
       icon: Map,
     },
   ],
+  proFeatures: [
+    {
+      title: "Upgrade Plan",
+      url: "#",
+      icon: Zap,
+    },
+    {
+      title: "Advanced Settings",
+      url: "#",
+      icon: Settings2,
+    },
+    {
+      title: "AI Assistant",
+      url: "#",
+      icon: Zap,
+    },
+  ],
+  socials: [
+    {
+      title: "Friends",
+      url: "/dashboard/friends",
+      icon: Users,
+      badge: 0,
+    },
+    {
+      title: "Chats",
+      url: "/dashboard/chats",
+      icon: MessageCircle,
+      badge: 3,
+    },
+  ],
+  connect: [
+    {
+      title: "Anonymous Connect",
+      url: "#",
+      icon: Heart,
+      badge: 0,
+    },
+    {
+      title: "Professional Connect",
+      url: "#",
+      icon: Handshake,
+      badge: 0,
+    },
+    {
+      title: "Join as a Mentor",
+      url: "#",
+      icon: Award,
+      badge: 0,
+    },
+  ],
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
+        {/* Single Profile Display - Future: Will replace with ProfileSwitcher for multiple profiles */}
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild>
+              <a href="#">
+                <div className="bg-sidebar text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+                  {/* <GalleryVerticalEnd className="size-4" /> */}
+                  <Image src="https://www.helixque.com/logo.svg" alt="Helixque Logo" width={32} height={32} />
+                </div>
+                <div className="flex flex-col gap-0.5 leading-none">
+                  <span className="font-semibold">Helixque</span>
+                  <span className="text-xs">Company</span>
+                </div>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+
+        {/* TODO: Implement ProfileSwitcher component for multiple profile/organization switching
+        <ProfileSwitcher profiles={data.profiles} currentProfile={data.currentProfile} />
+        */}
+
+        {/* Original TeamSwitcher implementation - Keep for reference
         <TeamSwitcher teams={data.teams} />
+        */}
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        {/* <NavProjects projects={data.projects} /> */}
+        <NavProFeatures features={data.proFeatures} />
+        <NavSocials items={data.socials} />
+        <NavConnect items={data.connect} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />
