@@ -37,7 +37,11 @@ export function ensureRemoteStream(
   }
 
   const remoteScreenVideo = remoteScreenShareRef.current;
-  if (peerScreenShareOn && remoteScreenVideo && remoteScreenVideo.srcObject !== remoteStreamRef.current) {
+  if (
+    peerScreenShareOn &&
+    remoteScreenVideo &&
+    remoteScreenVideo.srcObject !== remoteStreamRef.current
+  ) {
     remoteScreenVideo.srcObject = remoteStreamRef.current;
     remoteScreenVideo.playsInline = true;
     remoteScreenVideo.play().catch(() => {});
@@ -160,7 +164,9 @@ export function teardownPeers(
   videoSenderRef.current = null;
 
   if (localScreenShareStreamRef.current) {
-    localScreenShareStreamRef.current.getTracks().forEach((track) => track.stop());
+    localScreenShareStreamRef.current
+      .getTracks()
+      .forEach((track) => track.stop());
     localScreenShareStreamRef.current = null;
   }
 
@@ -206,18 +212,23 @@ export async function toggleCameraTrack(
     if (turningOn) {
       let track = currentVideoTrackRef.current;
       if (!track || track.readyState === "ended") {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+        });
         const video = stream.getVideoTracks()[0] ?? null;
         track = video;
         currentVideoTrackRef.current = video;
       }
 
       if (track && localVideoRef.current) {
-        const mediaStream = (localVideoRef.current.srcObject as MediaStream) || new MediaStream();
+        const mediaStream =
+          (localVideoRef.current.srcObject as MediaStream) || new MediaStream();
         if (!localVideoRef.current.srcObject) {
           localVideoRef.current.srcObject = mediaStream;
         }
-        mediaStream.getVideoTracks().forEach((existingTrack) => mediaStream.removeTrack(existingTrack));
+        mediaStream
+          .getVideoTracks()
+          .forEach((existingTrack) => mediaStream.removeTrack(existingTrack));
         if (track) {
           mediaStream.addTrack(track);
         }
