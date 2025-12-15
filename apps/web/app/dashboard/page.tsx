@@ -44,7 +44,7 @@ interface ActivityItem {
 }
 
 export default function Page() {
-  const { activeSection, activeSubSection } = useNavigation();
+  const { /* activeSection, activeSubSection */ } = useNavigation();
   const router = useRouter();
 
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(
@@ -205,7 +205,7 @@ export default function Page() {
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground mt-1">
-            Welcome back! Here's your overview.
+            Welcome back! Here’s your overview.
           </p>
         </div>
         <DropdownMenu>
