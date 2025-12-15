@@ -1,12 +1,19 @@
 "use client";
 
 import { useNavigation } from "@/contexts/navigation-context";
+import * as React from "react";
+import { Spinner, type SpinnerProps } from "@workspace/ui/components/kibo-ui/spinner";
 
+
+const variant: SpinnerProps["variant"][]=["infinite"]
 export default function Page() {
   const { activeSection, activeSubSection } = useNavigation();
+  const [isLoading, setIsLoading] = React.useState(true);
 
-  // Set default navigation on mount
-  useNavigation;
+  React.useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 5000);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div>
@@ -18,7 +25,14 @@ export default function Page() {
           ? `Explore ${activeSubSection} in ${activeSection}`
           : `Welcome to ${activeSection}`}
       </p>
-      <div className="bg-muted/50 mt-6 rounded-xl overflow-auto h-96" />
+
+      {isLoading ? (
+        <div className="bg-gradient-to-b from-muted/30 to-muted/50 mt-6 rounded-xl overflow-hidden h-96 flex items-center justify-center border border-border/50">
+          <Spinner variant={variant[0]} />
+        </div>
+      ) : (
+        <div className="bg-muted/50 mt-6 rounded-xl overflow-auto h-96" />
+      )}
     </div>
   );
 }
