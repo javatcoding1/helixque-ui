@@ -118,7 +118,7 @@ function DashboardLayout({ children }: { children: React.ReactNode }) {
           </Button>
         </header>
         <div
-          className="flex flex-1 flex-col gap-4 p-4 pt-0 overflow-auto"
+          className="flex flex-1 flex-col gap-4 p-4 pt-0 overflow-hidden min-h-0"
           id="dashboard-content"
         >
           {children}

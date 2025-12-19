@@ -11,36 +11,35 @@ import {
 } from "@workspace/ui/components/dropdown-menu";
 import { Button } from "@workspace/ui/components/button";
 import { Calendar } from "@workspace/ui/components/calendar";
+import { Badge } from "@workspace/ui/components/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@workspace/ui/components/dialog";
 import {
   ChevronDownIcon,
   VideoIcon,
   UsersIcon,
   CalendarIcon,
   ClockIcon,
-  CheckCircle2Icon,
-  XCircleIcon,
-  UserPlusIcon,
-  MessageSquareIcon,
-  BellIcon,
+  GlobeIcon,
 } from "lucide-react";
+import { format } from "date-fns";
+import { GanttExample } from "@/components/dashboard/gantt-example";
 
 interface Meeting {
   id: string;
   title: string;
   date: Date;
+  endDate: Date;
   type: "anonymous" | "exposed" | "scheduled";
   participants?: number;
   status?: "upcoming" | "completed" | "cancelled";
-}
-
-interface ActivityItem {
-  id: string;
-  type: "meeting" | "connection" | "message" | "system";
-  title: string;
-  description: string;
-  timestamp: Date;
-  icon: "video" | "user" | "message" | "bell" | "check" | "x";
-  status?: "success" | "error" | "info";
+  timezone?: string;
+  location?: string;
 }
 
 export default function Page() {
@@ -50,186 +49,127 @@ export default function Page() {
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(
     new Date()
   );
+  const [showMeetingDetails, setShowMeetingDetails] = React.useState(false);
+  const [selectedDateMeetings, setSelectedDateMeetings] = React.useState<Meeting[]>([]);
 
-  // Mock data for upcoming meetings
+  // User timezone
+  const userTimezone = "PST (UTC-8)";
+
+  // Mock data for upcoming meetings - extended with endDate and timezone
   const upcomingMeetings: Meeting[] = [
     {
       id: "1",
       title: "Team Sync",
-      date: new Date(2025, 11, 16, 10, 0),
+      date: new Date(2025, 11, 19, 10, 0),
+      endDate: new Date(2025, 11, 19, 11, 0),
       type: "scheduled",
       participants: 5,
       status: "upcoming",
+      timezone: "PST (UTC-8)",
+      location: "Conference Room A",
     },
     {
       id: "2",
       title: "Quick Connect",
-      date: new Date(2025, 11, 16, 14, 30),
+      date: new Date(2025, 11, 19, 14, 30),
+      endDate: new Date(2025, 11, 19, 15, 0),
       type: "anonymous",
       participants: 2,
       status: "upcoming",
+      timezone: "PST (UTC-8)",
     },
     {
       id: "3",
       title: "Client Review",
-      date: new Date(2025, 11, 17, 15, 0),
+      date: new Date(2025, 11, 20, 15, 0),
+      endDate: new Date(2025, 11, 20, 16, 30),
       type: "exposed",
       participants: 3,
       status: "upcoming",
-    },
-  ];
-
-  // Mock activity feed data
-  const recentActivity: ActivityItem[] = [
-    {
-      id: "1",
-      type: "meeting",
-      title: "Meeting completed",
-      description: "Team Sync with 5 participants completed successfully",
-      timestamp: new Date(2025, 11, 15, 16, 30),
-      icon: "check",
-      status: "success",
-    },
-    {
-      id: "2",
-      type: "connection",
-      title: "New connection",
-      description: "Alex joined your network via exposed mode",
-      timestamp: new Date(2025, 11, 15, 14, 20),
-      icon: "user",
-      status: "info",
-    },
-    {
-      id: "3",
-      type: "message",
-      title: "New message",
-      description: "Sarah sent you a message about the project review",
-      timestamp: new Date(2025, 11, 15, 11, 45),
-      icon: "message",
-      status: "info",
+      timezone: "EST (UTC-5)",
+      location: "Virtual - Zoom",
     },
     {
       id: "4",
-      type: "meeting",
-      title: "Meeting cancelled",
-      description: "Product Demo was cancelled by the organizer",
-      timestamp: new Date(2025, 11, 15, 9, 15),
-      icon: "x",
-      status: "error",
+      title: "Project Kickoff",
+      date: new Date(2025, 11, 21, 9, 0),
+      endDate: new Date(2025, 11, 21, 10, 0),
+      type: "scheduled",
+      participants: 8,
+      status: "upcoming",
+      timezone: "PST (UTC-8)",
+      location: "Main Office",
     },
     {
       id: "5",
-      type: "connection",
-      title: "Anonymous session",
-      description: "Connected anonymously with 2 people for 45 minutes",
-      timestamp: new Date(2025, 11, 14, 18, 30),
-      icon: "video",
-      status: "success",
+      title: "1:1 Sync",
+      date: new Date(2025, 11, 22, 16, 0),
+      endDate: new Date(2025, 11, 22, 16, 30),
+      type: "scheduled",
+      participants: 2,
+      status: "upcoming",
+      timezone: "PST (UTC-8)",
     },
   ];
 
-  const getActivityIcon = (icon: ActivityItem["icon"]) => {
-    const iconClass = "size-4";
-    switch (icon) {
-      case "video":
-        return <VideoIcon className={iconClass} />;
-      case "user":
-        return <UserPlusIcon className={iconClass} />;
-      case "message":
-        return <MessageSquareIcon className={iconClass} />;
-      case "bell":
-        return <BellIcon className={iconClass} />;
-      case "check":
-        return <CheckCircle2Icon className={iconClass} />;
-      case "x":
-        return <XCircleIcon className={iconClass} />;
-      default:
-        return <BellIcon className={iconClass} />;
-    }
+  // Calculate meetings count by date for the calendar
+  const getMeetingCountByDate = (date: Date): number => {
+    return upcomingMeetings.filter(
+      (m) =>
+        m.date.toDateString() === date.toDateString()
+    ).length;
   };
 
-  const getStatusColor = (status?: ActivityItem["status"]) => {
-    switch (status) {
-      case "success":
-        return "bg-green-500/10 text-green-600 dark:text-green-400";
-      case "error":
-        return "bg-red-500/10 text-red-600 dark:text-red-400";
-      default:
-        return "bg-blue-500/10 text-blue-600 dark:text-blue-400";
+  // Get meetings for selected date
+  const handleDateSelect = (date: Date | undefined) => {
+    setSelectedDate(date);
+    if (date) {
+      const meetingsForDate = upcomingMeetings.filter(
+        (m) => m.date.toDateString() === date.toDateString()
+      );
+      setSelectedDateMeetings(meetingsForDate);
+      if (meetingsForDate.length > 0) {
+        setShowMeetingDetails(true);
+      }
     }
-  };
-
-  const formatActivityTime = (date: Date) => {
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays === 1) return "Yesterday";
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
 
   const goToMeet = (identity: "anonymous" | "exposed") => {
     router.push(`/meet?identity=${identity}`);
   };
 
-  const formatMeetingTime = (date: Date) => {
-    return date.toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
-  };
-
-  const formatMeetingDate = (date: Date) => {
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    if (date.toDateString() === today.toDateString()) {
-      return "Today";
-    } else if (date.toDateString() === tomorrow.toDateString()) {
-      return "Tomorrow";
-    }
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  };
-
   return (
-    <div className="flex h-[90vh] overflow-hidden bg-background/95 backdrop-blur-sm gap-0 md:gap-3">
-      <div className="flex-1 flex flex-col space-y-3">
+    <div className="flex flex-col h-full w-full overflow-hidden bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-border/50 bg-background">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground mt-1">
-            Welcome back! Here’s your overview.
+          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Manage your schedule and meetings
           </p>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button size="lg">
+            <Button size="default" className="gap-2">
               <VideoIcon className="size-4" />
               New Meeting
               <ChevronDownIcon className="size-4 opacity-60" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-64">
-            <DropdownMenuItem onClick={() => goToMeet("anonymous")}>
-              <UsersIcon className="size-4" />
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem onClick={() => goToMeet("anonymous")} className="gap-3 py-2.5">
+              <UsersIcon className="size-4 text-muted-foreground" />
               <div className="flex-1">
-                <div className="font-medium">Anonymous Mode</div>
+                <div className="font-medium text-sm">Anonymous Mode</div>
                 <div className="text-xs text-muted-foreground">
                   Connect without showing identity
                 </div>
               </div>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => goToMeet("exposed")}>
-              <VideoIcon className="size-4" />
+            <DropdownMenuItem onClick={() => goToMeet("exposed")} className="gap-3 py-2.5">
+              <VideoIcon className="size-4 text-muted-foreground" />
               <div className="flex-1">
-                <div className="font-medium">Exposed Mode</div>
+                <div className="font-medium text-sm">Exposed Mode</div>
                 <div className="text-xs text-muted-foreground">
                   Connect with full profile visible
                 </div>
@@ -239,146 +179,261 @@ export default function Page() {
         </DropdownMenu>
       </div>
 
-      {/* Main Grid */}
-      <div className="grid lg:grid-cols-3 gap-0 md:gap-3">
-        {/* Left Column - Calendar & Upcoming */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Upcoming Meetings */}
-          <div className="bg-card/50 backdrop-blur-xl overflow-hidden border border-border/40 md:rounded-xl shadow-sm">
-            <div className="p-4 md:p-5 border-b border-border/40 bg-gradient-to-b from-background/80 to-transparent">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <ClockIcon className="size-5 text-primary" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold">Upcoming</h2>
-                    <p className="text-sm text-muted-foreground">
-                      {upcomingMeetings.length} meetings scheduled
-                    </p>
-                  </div>
-                </div>
+      {/* Main Content */}
+      <div className="flex-1 min-h-0 flex flex-col gap-3 p-4 overflow-y-auto">
+        {/* Top Row: Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* Total Meetings Card */}
+          <div className="bg-card border border-border/50 rounded-xl p-4 space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Total Meetings</span>
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <VideoIcon className="size-4 text-primary" />
               </div>
             </div>
-            <div className="divide-y divide-border/40">
-              {upcomingMeetings.length > 0 ? (
-                upcomingMeetings.map((meeting) => (
+            <p className="text-2xl font-bold">{upcomingMeetings.length}</p>
+            <p className="text-xs text-muted-foreground">Scheduled this month</p>
+          </div>
+
+          {/* This Week Card */}
+          <div className="bg-card border border-border/50 rounded-xl p-4 space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">This Week</span>
+              <div className="p-2 bg-blue-500/10 rounded-lg">
+                <CalendarIcon className="size-4 text-blue-500" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold">
+              {upcomingMeetings.filter((m) => {
+                const now = new Date();
+                const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+                return m.date >= now && m.date <= weekFromNow;
+              }).length}
+            </p>
+            <p className="text-xs text-muted-foreground">Upcoming meetings</p>
+          </div>
+
+          {/* Timezone Card */}
+          <div className="bg-card border border-border/50 rounded-xl p-4 space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Timezone</span>
+              <div className="p-2 bg-green-500/10 rounded-lg">
+                <GlobeIcon className="size-4 text-green-500" />
+              </div>
+            </div>
+            <p className="text-lg font-semibold">{userTimezone}</p>
+            <p className="text-xs text-muted-foreground">All times in local timezone</p>
+          </div>
+
+          {/* Next Meeting Card */}
+          <div className="bg-card border border-border/50 rounded-xl p-4 space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Next Meeting</span>
+              <div className="p-2 bg-orange-500/10 rounded-lg">
+                <ClockIcon className="size-4 text-orange-500" />
+              </div>
+            </div>
+            {upcomingMeetings[0] ? (
+              <>
+                <p className="text-lg font-semibold truncate">{upcomingMeetings[0].title}</p>
+                <p className="text-xs text-muted-foreground">
+                  {format(upcomingMeetings[0].date, "MMM d, HH:mm")}
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-lg font-semibold">No meetings</p>
+                <p className="text-xs text-muted-foreground">You're all caught up!</p>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Middle Row: Calendar + Upcoming */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Mini Calendar */}
+          <div className="lg:col-span-1 bg-card border border-border/50 rounded-xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-border/50">
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                <CalendarIcon className="size-4 text-primary" />
+                Calendar
+              </h3>
+            </div>
+            <div className="p-4 flex justify-center">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={handleDateSelect}
+                className="[--cell-size:2.25rem]"
+                modifiers={{
+                  hasEvent: (date) => getMeetingCountByDate(date) > 0,
+                }}
+                modifiersStyles={{
+                  hasEvent: {
+                    color: "hsl(var(--primary))",
+                    fontWeight: "bold",
+                  },
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Upcoming Meetings */}
+          <div className="lg:col-span-2 bg-card border border-border/50 rounded-xl overflow-hidden flex flex-col">
+            <div className="px-5 py-4 border-b border-border/50 flex items-center justify-between">
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                <ClockIcon className="size-4 text-primary" />
+                Upcoming Meetings
+              </h3>
+              <Badge variant="secondary" className="text-xs">
+                {upcomingMeetings.length} total
+              </Badge>
+            </div>
+            <div className="flex-1 p-4 overflow-y-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {upcomingMeetings.slice(0, 6).map((meeting) => (
+                  <div 
+                    key={meeting.id} 
+                    className="p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors border border-transparent hover:border-border/50"
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <p className="font-medium text-sm text-foreground truncate">{meeting.title}</p>
+                      <Badge variant="outline" className="capitalize text-xs shrink-0">
+                        {meeting.type}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <CalendarIcon className="size-3" />
+                      <span>{format(meeting.date, "MMM d, HH:mm")}</span>
+                      {meeting.participants && (
+                        <>
+                          <span className="text-border">•</span>
+                          <UsersIcon className="size-3" />
+                          <span>{meeting.participants}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {upcomingMeetings.length === 0 && (
+                  <div className="col-span-2 text-center py-8">
+                    <p className="text-sm text-muted-foreground">No upcoming meetings</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Row: Gantt Chart */}
+        <div className="h-[220px] shrink-0 bg-card border border-border/50 rounded-xl overflow-hidden flex flex-col">
+          <div className="px-4 py-3 border-b border-border/50 flex items-center justify-between shrink-0">
+            <h3 className="text-sm font-semibold flex items-center gap-2">
+              <CalendarIcon className="size-4 text-primary" />
+              Schedule Timeline
+            </h3>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                <span className="text-xs text-muted-foreground">Scheduled</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                <span className="text-xs text-muted-foreground">Anonymous</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                <span className="text-xs text-muted-foreground">Exposed</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* <GanttExample
+              meetings={upcomingMeetings}
+              onSelectMeeting={(id) => console.log("Selected meeting:", id)}
+              onRemoveMeeting={(id) => console.log("Removed meeting:", id)}
+              onMoveMeeting={(id, startAt, endAt) =>
+                console.log("Moved meeting:", id, startAt, endAt)
+              }
+              onCreateMarker={(date) => console.log("Create marker:", date)}
+            /> */}
+
+        {/* Selected Date Meetings Details */}
+        {selectedDate && selectedDateMeetings.length > 0 && (
+          <div className="bg-card border border-border/50 rounded-xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-border/50 flex items-center justify-between">
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                <CalendarIcon className="size-4 text-primary" />
+                {selectedDate.toLocaleDateString("en-US", {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </h3>
+              <Badge variant="secondary" className="text-xs">
+                {selectedDateMeetings.length} meeting{selectedDateMeetings.length !== 1 ? "s" : ""}
+              </Badge>
+            </div>
+            <div className="p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {selectedDateMeetings.map((meeting) => (
                   <div
                     key={meeting.id}
-                    className="p-5 hover:bg-muted/50 transition-colors cursor-pointer group"
+                    className="p-4 bg-muted/50 border border-border/50 rounded-lg hover:bg-muted transition-colors"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="flex-shrink-0 text-center min-w-[60px]">
-                        <div className="text-xs text-muted-foreground font-medium uppercase">
-                          {formatMeetingDate(meeting.date)}
-                        </div>
-                        <div className="text-base font-semibold mt-0.5">
-                          {formatMeetingTime(meeting.date)}
-                        </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-medium mb-1 group-hover:text-primary transition-colors">
-                          {meeting.title}
-                        </h3>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-muted text-xs font-medium capitalize">
-                            {meeting.type === "anonymous" && <UsersIcon className="size-3" />}
-                            {meeting.type === "exposed" && <VideoIcon className="size-3" />}
-                            {meeting.type === "scheduled" && <CalendarIcon className="size-3" />}
-                            {meeting.type}
-                          </span>
-                          {meeting.participants && (
-                            <span className="text-xs">
-                              {meeting.participants} participants
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="sm" className="rounded-lg">
-                        Join
-                      </Button>
-                    </div>
+                    <p className="font-medium text-sm text-foreground truncate mb-1">{meeting.title}</p>
+                    <p className="text-muted-foreground text-xs mb-2">
+                      {format(meeting.date, "HH:mm")} - {format(meeting.endDate, "HH:mm")}
+                    </p>
+                    <Badge variant="outline" className="capitalize text-xs">
+                      {meeting.type}
+                    </Badge>
                   </div>
-                ))
-              ) : (
-                <div className="p-6 text-center text-muted-foreground">
-                  <CalendarIcon className="size-10 mx-auto mb-2.5 opacity-30" />
-                  <p className="text-sm">No upcoming meetings</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Recent Activity Feed */}
-          <div className="bg-card/50 backdrop-blur-xl overflow-hidden border border-border/40 md:rounded-xl shadow-sm">
-            <div className="p-4 md:p-5 border-b border-border/40 bg-gradient-to-b from-background/80 to-transparent">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <BellIcon className="size-5 text-primary" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold">Recent Activity</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Your latest updates and notifications
-                  </p>
-                </div>
+                ))}
               </div>
             </div>
-            <div className="divide-y divide-border/40 max-h-[500px] overflow-y-auto">
-              {recentActivity.map((activity) => (
+          </div>
+        )}
+      </div>
+      {/* Meeting Details Dialog */}
+      <Dialog open={showMeetingDetails} onOpenChange={setShowMeetingDetails}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Meetings on {selectedDate?.toLocaleDateString()}</DialogTitle>
+            <DialogDescription>
+              Click a meeting to view details
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 max-h-[400px] overflow-y-auto">
+            {selectedDateMeetings.length > 0 ? (
+              selectedDateMeetings.map((meeting) => (
                 <div
-                  key={activity.id}
-                  className="p-5 hover:bg-muted/50 transition-colors cursor-pointer"
+                  key={meeting.id}
+                  className="p-3 bg-secondary/50 rounded-lg space-y-2 cursor-pointer hover:bg-secondary transition-colors"
                 >
-                  <div className="flex gap-3">
-                    <div
-                      className={`flex-shrink-0 p-2 rounded-lg ${getStatusColor(
-                        activity.status
-                      )}`}
-                    >
-                      {getActivityIcon(activity.icon)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1">
-                          <h3 className="font-medium text-sm mb-0.5">
-                            {activity.title}
-                          </h3>
-                          <p className="text-sm text-muted-foreground line-clamp-2">
-                            {activity.description}
-                          </p>
-                        </div>
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
-                          {formatActivityTime(activity.timestamp)}
-                        </span>
-                      </div>
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium text-sm">{meeting.title}</p>
+                    <Badge variant="outline" className="capitalize text-xs">
+                      {meeting.type}
+                    </Badge>
                   </div>
+                  <p className="text-sm text-muted-foreground">
+                    {format(meeting.date, "HH:mm")} - {format(meeting.endDate, "HH:mm")}
+                  </p>
+                  {meeting.participants && (
+                    <p className="text-xs text-muted-foreground">
+                      {meeting.participants} participants
+                    </p>
+                  )}
                 </div>
-              ))}
-            </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">No meetings scheduled</p>
+            )}
           </div>
-        </div>
-
-        {/* Right Column - Calendar */}
-        <div className="lg:col-span-1">
-          <div className="bg-card/50 backdrop-blur-xl overflow-hidden border border-border/40 md:rounded-xl shadow-sm sticky top-6">
-            <div className="p-4 md:p-5 border-b border-border/40 bg-gradient-to-b from-background/80 to-transparent">
-              <div className="flex items-center gap-2">
-                <CalendarIcon className="size-5 text-primary" />
-                <h2 className="font-semibold">Calendar</h2>
-              </div>
-            </div>
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={setSelectedDate}
-              className="rounded-xl w-full [--cell-size:--spacing(9)] md:[--cell-size:--spacing(10)]"
-            />
-          </div>
-        </div>
-      </div>
-      </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
