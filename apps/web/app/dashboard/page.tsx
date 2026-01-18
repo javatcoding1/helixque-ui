@@ -11,7 +11,11 @@ import {
   DropdownMenuTrigger,
 } from "@workspace/ui/components/dropdown-menu";
 import { Button } from "@workspace/ui/components/button";
-import { Calendar } from "@workspace/ui/components/calendar";
+import dynamic from "next/dynamic";
+const Calendar = dynamic(() => import("@workspace/ui/components/calendar").then((mod) => mod.Calendar), {
+  ssr: false,
+  loading: () => <div className="h-[300px] w-full animate-pulse bg-muted/20 rounded-md" />
+});
 import { Badge } from "@workspace/ui/components/badge";
 import {
   Dialog,
@@ -78,8 +82,8 @@ export default function Page() {
     title: "",
     description: "",
     date: format(new Date(), "yyyy-MM-dd"),
-    startTime: "09:00",
-    endTime: "10:00",
+    startTime: format(new Date(new Date().setHours(new Date().getHours() + 1, 0, 0, 0)), "HH:mm"),
+    endTime: format(new Date(new Date().setHours(new Date().getHours() + 2, 0, 0, 0)), "HH:mm"),
   });
 
   // Initialize Breadcrumbs
@@ -92,69 +96,74 @@ export default function Page() {
   React.useEffect(() => {
     if (!userId) return;
 
-    const fetchData = async () => {
+    const loadDashboardData = async () => {
       try {
         const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URI || "http://localhost:4001";
         
-        // Fetch Stats
-        const statsRes = await fetch(`${backendUrl}/users/${userId}/stats`);
-        if (statsRes.ok) {
-          setStats(await statsRes.json());
-        } else {
-           throw new Error("Stats fetch failed");
+        // Parallel Fetch
+        console.time("DashboardFetch");
+        const [statsRes, meetingsRes] = await Promise.allSettled([
+            fetch(`${backendUrl}/users/${userId}/stats`),
+            fetch(`${backendUrl}/meetings/user/${userId}`)
+        ]);
+        console.timeEnd("DashboardFetch");
+
+        // Handle Stats
+        if (statsRes.status === 'fulfilled' && statsRes.value.ok) {
+            setStats(await statsRes.value.json());
         }
 
-        // Fetch Meetings
-        const meetingsRes = await fetch(`${backendUrl}/meetings/user/${userId}`);
-        if (meetingsRes.ok) {
-          const data = await meetingsRes.json();
-          setMeetings(data);
-        } else {
-           throw new Error("Meetings fetch failed");
+        // Handle Meetings
+        if (meetingsRes.status === 'fulfilled' && meetingsRes.value.ok) {
+            const data = await meetingsRes.value.json();
+            setMeetings(data);
         }
       } catch (error) {
-        console.warn("Backend unreachable, using mock data:", error);
-        toast.error("Backend unavailable. Loading demo data.");
-        
-        // Mock Stats
-        setStats({
-          meetingsCount: 12,
-          upcomingMeetingsCount: 3,
-          connectionsCount: 45,
-          profileViews: 128
-        });
-
-        // Mock Upcoming Meetings
-        setMeetings([
-            {
-                id: "1",
-                title: "Team Sync",
-                startTime: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(), // Tomorrow
-                endTime: new Date(Date.now() + 1000 * 60 * 60 * 25).toISOString(),
-                type: "scheduled",
-                status: "confirmed",
-                participants: []
-            },
-             {
-                id: "2",
-                title: "Project Review",
-                startTime: new Date(Date.now() + 1000 * 60 * 60 * 48).toISOString(), // Day after tomorrow
-                endTime: new Date(Date.now() + 1000 * 60 * 60 * 49).toISOString(),
-                type: "scheduled",
-                status: "confirmed",
-                participants: []
-            }
-        ]);
+        console.warn("Fetch error:", error);
       }
     };
 
-    fetchData();
+    loadDashboardData();
   }, [userId]);
 
+  // Re-fetch helper that can be called from handlers
+  const refreshDashboard = async () => {
+       if (!userId) return;
+       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URI || "http://localhost:4001";
+       // Quick refresh
+       const [statsRes, meetingsRes] = await Promise.allSettled([
+            fetch(`${backendUrl}/users/${userId}/stats`),
+            fetch(`${backendUrl}/meetings/user/${userId}`)
+       ]);
+       if (meetingsRes.status === 'fulfilled' && meetingsRes.value.ok) setMeetings(await meetingsRes.value.json());
+  };
+
   const upcomingMeetings = React.useMemo(() => {
-    return meetings
-      .filter(m => new Date(m.startTime) > new Date())
+    const now = new Date();
+    console.log("Filtering meetings relative to NOW:", now.toISOString());
+    
+    const upcoming = meetings
+      .filter(m => {
+          const mStartDate = new Date(m.startTime);
+          const mEndDate = new Date(m.endTime);
+          
+          if (isNaN(mStartDate.getTime()) || isNaN(mEndDate.getTime())) {
+              console.warn("Invalid meeting date:", m);
+              return false;
+          }
+          
+          // Show if the meeting hasn't ENDED yet (includes ongoing)
+          const isRelevant = mEndDate > now;
+          
+          if (!isRelevant) {
+             // console.log("Skipping past meeting:", m.title); 
+          }
+          return isRelevant;
+      })
       .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+    
+    console.log("Final Upcoming List:", upcoming);
+    return upcoming;
   }, [meetings]);
 
   // Calculate meetings count by date for the calendar
@@ -178,10 +187,14 @@ export default function Page() {
     }
   };
 
+  const [isCreating, setIsCreating] = React.useState(false);
+
   const handleCreateMeeting = async () => {
     if (!userId) return;
+    if (isCreating) return; // double safety
 
     try {
+      setIsCreating(true);
       const startDateTime = new Date(`${newMeeting.date}T${newMeeting.startTime}:00`);
       const endDateTime = new Date(`${newMeeting.date}T${newMeeting.endTime}:00`);
 
@@ -196,25 +209,53 @@ export default function Page() {
       }
 
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URI || "http://localhost:4001";
-      const res = await fetch(`${backendUrl}/meetings`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: newMeeting.title,
-          description: newMeeting.description,
-          startTime: startDateTime.toISOString(),
-          endTime: endDateTime.toISOString(),
-          hostId: userId,
-          type: "scheduled"
-        }),
-      });
+      
+      let res;
+      if (editingId) {
+          // UPDATE
+          res = await fetch(`${backendUrl}/meetings/${editingId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              title: newMeeting.title,
+              description: newMeeting.description,
+              startTime: startDateTime.toISOString(),
+              endTime: endDateTime.toISOString(),
+            }),
+          });
+      } else {
+          // CREATE
+          res = await fetch(`${backendUrl}/meetings`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              title: newMeeting.title,
+              description: newMeeting.description,
+              startTime: startDateTime.toISOString(),
+              endTime: endDateTime.toISOString(),
+              hostId: userId,
+              type: "scheduled"
+            }),
+          });
+      }
 
-      if (!res.ok) throw new Error("Failed to create meeting");
+      if (!res.ok) throw new Error("Failed to save meeting");
 
-      const createdMeeting = await res.json();
-      setMeetings([...meetings, createdMeeting]);
+      const savedMeeting = await res.json();
+      
+      if (editingId) {
+          toast.success("Meeting updated!");
+          setEditingId(null);
+      } else {
+          toast.success("Meeting scheduled!", {
+              description: "Email reminders coming soon in a future update."
+          });
+      }
+      
+      // Refresh everything to ensure stats and list are in sync
+      await refreshDashboard();
+      
       setShowScheduleDialog(false);
-      toast.success("Meeting scheduled successfully!");
       
       // Reset form
       setNewMeeting({
@@ -228,7 +269,42 @@ export default function Page() {
     } catch (error) {
       toast.error("Failed to schedule meeting");
       console.error(error);
+    } finally {
+      setIsCreating(false);
     }
+  };
+
+  const handleCancelMeeting = async (id: string) => {
+      if (!confirm("Are you sure you want to cancel this meeting?")) return;
+      try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URI || "http://localhost:4001"}/meetings/${id}`, { method: 'DELETE' });
+          if (res.ok) {
+              await refreshDashboard();
+              toast.success("Meeting cancelled");
+          } else {
+              throw new Error("Failed to cancel");
+          }
+      } catch(e) {
+          toast.error("Could not cancel meeting");
+      }
+  };
+
+  // Editing state
+  const [editingId, setEditingId] = React.useState<string | null>(null);
+
+  const handleEditClick = (meeting: Meeting) => {
+      setEditingId(meeting.id);
+      const start = new Date(meeting.startTime);
+      const end = new Date(meeting.endTime);
+      
+      setNewMeeting({
+          title: meeting.title,
+          description: meeting.description || "",
+          date: format(start, "yyyy-MM-dd"), // Assumes single day event for simplicity
+          startTime: format(start, "HH:mm"),
+          endTime: format(end, "HH:mm")
+      });
+      setShowScheduleDialog(true);
   };
 
   const goToMeet = (identity: "anonymous" | "exposed") => {
@@ -396,13 +472,27 @@ export default function Page() {
                 {upcomingMeetings.slice(0, 6).map((meeting) => (
                   <div 
                     key={meeting.id} 
-                    className="p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors border border-transparent hover:border-border/50"
+                    className="p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors border border-transparent hover:border-border/50 group relative"
                   >
                     <div className="flex items-start justify-between gap-2 mb-2">
-                      <p className="font-medium text-sm text-foreground truncate">{meeting.title}</p>
-                      <Badge variant="outline" className="capitalize text-xs shrink-0">
-                        {meeting.type}
-                      </Badge>
+                      <p className="font-medium text-sm text-foreground truncate flex-1">{meeting.title}</p>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="capitalize text-xs shrink-0">
+                            {meeting.type}
+                        </Badge>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <span className="sr-only">Menu</span>
+                                    <ChevronDownIcon className="h-3 w-3" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleEditClick(meeting)}>Edit</DropdownMenuItem>
+                                <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleCancelMeeting(meeting.id)}>Cancel</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <CalendarIcon className="size-3" />
@@ -501,12 +591,24 @@ export default function Page() {
       </Dialog>
 
       {/* Schedule Meeting Dialog */}
-      <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
+      <Dialog open={showScheduleDialog} onOpenChange={(open) => {
+          setShowScheduleDialog(open);
+          if (!open) {
+              setEditingId(null);
+              setNewMeeting({
+                title: "",
+                description: "",
+                date: format(new Date(), "yyyy-MM-dd"),
+                startTime: format(new Date(new Date().setHours(new Date().getHours() + 1, 0, 0, 0)), "HH:mm"),
+                endTime: format(new Date(new Date().setHours(new Date().getHours() + 2, 0, 0, 0)), "HH:mm"),
+              });
+          }
+      }}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Schedule Meeting</DialogTitle>
+            <DialogTitle>{editingId ? "Edit Meeting" : "Schedule Meeting"}</DialogTitle>
             <DialogDescription>
-              Create a new scheduled meeting.
+              {editingId ? "Update meeting details." : "Create a new scheduled meeting."}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -561,8 +663,15 @@ export default function Page() {
             </div>
           </div>
           <DialogFooter>
-             <Button variant="outline" onClick={() => setShowScheduleDialog(false)}>Cancel</Button>
-             <Button onClick={handleCreateMeeting}>Schedule</Button>
+             <Button variant="outline" onClick={() => setShowScheduleDialog(false)} disabled={isCreating}>Cancel</Button>
+             <Button onClick={handleCreateMeeting} disabled={isCreating}>
+               {isCreating ? (
+                 <>
+                   <span className="w-4 h-4 mr-2 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                   Scheduling...
+                 </>
+               ) : "Schedule"}
+             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

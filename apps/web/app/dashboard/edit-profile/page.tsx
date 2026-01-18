@@ -14,6 +14,7 @@ import {
   Globe,
   Clock,
   MapPin,
+  UserPen,
 } from "lucide-react";
 
 import { Button } from "@workspace/ui/components/button";
@@ -38,6 +39,8 @@ const EditProfileFormSchema = z.object({
   profile: UserProfileSchema,
   availability: UserAvailabilitySchema,
   customDomain: z.string().optional(), // Temporary field for custom domain input
+  bio: z.string().max(500, "Bio must be less than 500 characters").optional(),
+  headline: z.string().max(100, "Headline must be less than 100 characters").optional(),
 });
 
 type EditProfileFormValues = z.infer<typeof EditProfileFormSchema>;
@@ -63,6 +66,8 @@ export default function EditProfilePage() {
     defaultValues: {
       displayName: "",
       email: "",
+      bio: "",
+      headline: "",
       profile: {
         languages: [],
         role: "",
@@ -107,6 +112,8 @@ export default function EditProfilePage() {
           reset({
             displayName: userData.username || session.user.name || "",
             email: userData.email || session.user.email || "",
+            bio: userData.bio || "",
+            headline: userData.headline || "",
             profile: {
                 languages: userData.languages || [],
                 role: userData.role || "",
@@ -130,6 +137,8 @@ export default function EditProfilePage() {
           reset({
             displayName: session.user.name || "Demo User",
             email: session.user.email || "demo@example.com",
+            bio: "Passionate developer building great things.",
+            headline: "Software Engineer @ Tech Co",
             profile: {
                 languages: ["English", "Spanish"],
                 role: "Full Stack Developer",
@@ -188,6 +197,8 @@ export default function EditProfilePage() {
                body: JSON.stringify({
                    username: finalData.displayName,
                    email: finalData.email,
+                   bio: finalData.bio,
+                   headline: finalData.headline,
                    domain: finalData.profile.domain,
                    role: finalData.profile.role,
                    skills: finalData.profile.techStack,
@@ -316,6 +327,44 @@ export default function EditProfilePage() {
                 )}
               </div>
             </div>
+
+        {/* Bio & Headline */}
+        <div className="bg-card border border-border/50 rounded-xl p-6 space-y-4">
+             <div className="flex items-center gap-2 mb-2">
+               <UserPen className="h-5 w-5 text-purple-500" />
+               <h2 className="text-lg font-semibold">About You</h2>
+             </div>
+             
+             <div className="grid gap-4">
+                <div className="grid gap-2">
+                    <Label htmlFor="headline">Headline</Label>
+                    <Input
+                        id="headline"
+                        {...register("headline")}
+                        placeholder="e.g. Senior Frontend Engineer | React Specialist"
+                        className={errors.headline ? "border-destructive" : ""}
+                    />
+                    {errors.headline && (
+                        <p className="text-destructive text-sm">{errors.headline.message}</p>
+                    )}
+                    <p className="text-[10px] text-muted-foreground">Short professional tagline (max 100 chars).</p>
+                </div>
+
+                <div className="grid gap-2">
+                    <Label htmlFor="bio">Bio</Label>
+                    <textarea
+                        id="bio"
+                        {...register("bio")}
+                        className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        placeholder="Tell us about yourself, your experience, and what you're looking for..."
+                    />
+                     {errors.bio && (
+                        <p className="text-destructive text-sm">{errors.bio.message}</p>
+                    )}
+                     <p className="text-[10px] text-muted-foreground">Share your professional journey (max 500 chars).</p>
+                </div>
+             </div>
+        </div>
           </div>
         </div>
 

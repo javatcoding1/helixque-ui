@@ -31,7 +31,8 @@ import { useEffect } from "react";
 
 function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { activeSection, activeSubSection } = useNavigation();
-  const { tourOpen, setTourOpen } = useHelixque();
+  const tourOpen = useHelixque((state) => state.tourOpen);
+  const setTourOpen = useHelixque((state) => state.setTourOpen);
   /* Removed duplicate line */
 
   return (
