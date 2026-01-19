@@ -13,6 +13,7 @@ import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@workspace/ui/components/avatar";
+import { DiscussionCard } from "@/components/discussion-card";
 
 interface Discussion {
   id: string;
@@ -78,51 +79,31 @@ export default function CommunityPage() {
         }),
       });
       
-      if (!res.ok) throw new Error("Failed");
+      if (!res.ok) {
+        const errorData = await res.json();
+        // Zod errors come as an array of objects
+        if (Array.isArray(errorData.error)) {
+             const messages = errorData.error.map((e: any) => e.message).join(", ");
+             throw new Error(messages);
+        }
+        throw new Error(errorData.error || "Failed to create discussion");
+      }
       
+      const createdDiscussion = await res.json();
+      setDiscussions(prev => [createdDiscussion, ...prev]);
+
       toast.success("Discussion started!", { description: "Your topic is now live." });
       setNewTitle("");
       setNewContent("");
       setIsCreateOpen(false);
-      fetchDiscussions();
-    } catch (e) {
-        toast.error("Failed to create discussion");
+      // No need to fetchDiscussions() as we updated state optimistically
+    } catch (e: any) {
+        toast.error(e.message || "Failed to create discussion");
     } finally {
         setIsSubmitting(false);
     }
   };
 
-  const handleReaction = async (e: React.MouseEvent, id: string, hasReacted: boolean) => {
-    e.preventDefault(); // Prevent card click
-    if (!session?.user?.id) return toast.error("Please login first");
-
-    // Optimistic Update
-    setDiscussions(prev => prev.map(d => {
-        if (d.id === id) {
-            return {
-                ...d,
-                _count: { ...d._count, reactions: hasReacted ? d._count.reactions - 1 : d._count.reactions + 1 },
-                reactions: hasReacted ? [] : [{ type: 'LIKE' }]
-            };
-        }
-        return d;
-    }));
-
-    try {
-        await fetch(`${backendUrl}/discussions/reactions`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                userId: session.user.id,
-                targetId: id,
-                targetType: "DISCUSSION",
-                type: "LIKE"
-            })
-        });
-    } catch (e) {
-        // Revert on failure (could refetch, but silent fail usually ok for likes)
-    }
-  };
 
   return (
     <div className="flex flex-col h-full bg-background overflow-y-auto p-6 space-y-6">
@@ -179,50 +160,9 @@ export default function CommunityPage() {
         </div>
       ) : (
         <div className="grid gap-4">
-            {discussions.map((post) => {
-                const hasReacted = post.reactions && post.reactions.length > 0;
-                return (
-                    <Link href={`/dashboard/community/${post.id}`} key={post.id}>
-                        <Card className="hover:border-primary/40 transition-colors cursor-pointer group">
-                        <CardContent className="p-6">
-                            <div className="flex gap-4">
-                                <div className="flex flex-col items-center gap-1 text-muted-foreground min-w-[3rem]">
-                                    <Button 
-                                        variant="ghost" 
-                                        size="icon" 
-                                        className={`h-9 w-9 ${hasReacted ? 'text-blue-500 bg-blue-500/10' : 'group-hover:text-foreground'}`}
-                                        onClick={(e) => handleReaction(e, post.id, hasReacted)}
-                                    >
-                                        <ThumbsUp className={`h-4 w-4 ${hasReacted ? 'fill-current' : ''}`} />
-                                    </Button>
-                                    <span className="text-sm font-medium">{post._count.reactions}</span>
-                                </div>
-                                
-                                <div className="flex-1 space-y-2">
-                                    <div className="flex items-center gap-2 mb-1 text-xs text-muted-foreground">
-                                        <Avatar className="h-5 w-5">
-                                            <AvatarImage src={post.author.imageUrl || undefined} />
-                                            <AvatarFallback>{post.author.username?.[0] || 'U'}</AvatarFallback>
-                                        </Avatar>
-                                        <span>{post.author.username || 'Anonymous'}</span>
-                                        <span>•</span>
-                                        <span>{new Date(post.createdAt).toLocaleDateString()}</span>
-                                    </div>
-                                    <h3 className="text-lg font-semibold group-hover:text-primary transition-colors">{post.title}</h3>
-                                    <p className="text-sm text-muted-foreground line-clamp-2">{post.content}</p>
-                                    
-                                    <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-                                        <span className="flex items-center gap-1 group-hover:text-foreground transition-colors">
-                                            <MessageSquare className="h-3.5 w-3.5" /> {post._count.comments} comments
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </CardContent>
-                        </Card>
-                    </Link>
-                );
-            })}
+            {discussions.map((post) => (
+                <DiscussionCard key={post.id} post={post} />
+            ))}
         </div>
       )}
     </div>

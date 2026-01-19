@@ -198,11 +198,13 @@ export default function DiscussionDetailsPage() {
     }
   };
 
+  const [isPostingComment, setIsPostingComment] = useState(false);
+
   const handlePostComment = async () => {
     if (!commentText.trim()) return;
+    setIsPostingComment(true);
     
     try {
-        // Optimistic UI could be confusing given nested structure, so we refetch for simplicity
         const res = await fetch(`${backendUrl}/discussions/${id}/comments`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -215,12 +217,33 @@ export default function DiscussionDetailsPage() {
 
         if (!res.ok) throw new Error("Failed");
         
+        const newComment = await res.json();
+        
+        // Optimistic Update
+        if (discussion) {
+            if (replyToId) {
+                // If reply, simplistic refresh or deep update. 
+                // For deep update: find parent and append. Complex, so we'll refetch for replies but at least we handle loading state.
+                fetchData();
+            } else {
+                // Top level, append easily
+                setDiscussion(prev => prev ? {
+                    ...prev,
+                    comments: [...prev.comments, { ...newComment, replies: [], reactions: [] }],
+                    _count: { ...prev._count, comments: prev._count.comments + 1, reactions: prev._count.reactions }
+                } : null);
+            }
+        } else {
+            fetchData();
+        }
+        
         setCommentText("");
         setReplyToId(null);
         toast.success("Comment posted");
-        fetchData(); // Refresh to show new comment in correct place
     } catch (e) {
         toast.error("Failed to post comment");
+    } finally {
+        setIsPostingComment(false);
     }
   };
 
@@ -384,8 +407,8 @@ export default function DiscussionDetailsPage() {
                  onChange={(e) => setCommentText(e.target.value)}
                />
                <div className="flex justify-end">
-                  <Button onClick={handlePostComment} disabled={!commentText.trim()}>
-                     <Send className="mr-2 h-4 w-4" /> Post {replyToId ? "Reply" : "Comment"}
+                  <Button onClick={handlePostComment} disabled={!commentText.trim() || isPostingComment}>
+                     {isPostingComment ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />} Post {replyToId ? "Reply" : "Comment"}
                   </Button>
                </div>
             </CardContent>
