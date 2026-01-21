@@ -224,7 +224,7 @@ There are many ways you can contribute to Helixque:
 ### We Couldn't Have Done This Without You
 
 <a href="https://github.com/HXQLabs/Helixque/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=HXQLabs/Helixque" />
+  <img src="https://contrib.rocks/image?repo=HXQLabs/helixque-ui" />
 </a>
 
 ## 📄 License
