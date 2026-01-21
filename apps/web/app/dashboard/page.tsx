@@ -39,6 +39,8 @@ import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
 import { toast } from "sonner";
 import { Textarea } from "@workspace/ui/components/textarea";
+import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
 
 interface Meeting {
   id: string;
@@ -67,14 +69,25 @@ export default function Page() {
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(new Date());
   const [showMeetingDetails, setShowMeetingDetails] = React.useState(false);
   const [showScheduleDialog, setShowScheduleDialog] = React.useState(false);
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URI || "http://localhost:4001";
   
-  const [stats, setStats] = React.useState<DashboardStats>({
-    meetingsCount: 0,
-    upcomingMeetingsCount: 0,
-    connectionsCount: 0,
-    profileViews: 0
-  });
-  const [meetings, setMeetings] = React.useState<Meeting[]>([]);
+  // SWR Fetching
+  const { data: stats, mutate: mutateStats } = useSWR<DashboardStats>(
+     userId ? `${backendUrl}/users/${userId}/stats` : null,
+     fetcher,
+     {
+        fallbackData: { meetingsCount: 0, upcomingMeetingsCount: 0, connectionsCount: 0, profileViews: 0 }
+     }
+  );
+
+  const { data: meetings, mutate: mutateMeetings } = useSWR<Meeting[]>(
+     userId ? `${backendUrl}/meetings/user/${userId}` : null,
+     fetcher,
+     {
+        fallbackData: []
+     }
+  );
+
   const [selectedDateMeetings, setSelectedDateMeetings] = React.useState<Meeting[]>([]);
 
   // New Meeting Form State
@@ -92,91 +105,34 @@ export default function Page() {
     setActiveSubSection("Overview");
   }, [setActiveSection, setActiveSubSection]);
 
-  // Fetch Data
-  React.useEffect(() => {
-    if (!userId) return;
-
-    const loadDashboardData = async () => {
-      try {
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URI || "http://localhost:4001";
-        
-        // Parallel Fetch
-        console.time("DashboardFetch");
-        const [statsRes, meetingsRes] = await Promise.allSettled([
-            fetch(`${backendUrl}/users/${userId}/stats`),
-            fetch(`${backendUrl}/meetings/user/${userId}`)
-        ]);
-        console.timeEnd("DashboardFetch");
-
-        // Handle Stats
-        if (statsRes.status === 'fulfilled' && statsRes.value.ok) {
-            setStats(await statsRes.value.json());
-        }
-
-        // Handle Meetings
-        if (meetingsRes.status === 'fulfilled' && meetingsRes.value.ok) {
-            const data = await meetingsRes.value.json();
-            setMeetings(data);
-        }
-      } catch (error) {
-        console.warn("Fetch error:", error);
-      }
-    };
-
-    loadDashboardData();
-  }, [userId]);
-
-  // Re-fetch helper that can be called from handlers
-  const refreshDashboard = async () => {
-       if (!userId) return;
-       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URI || "http://localhost:4001";
-       // Quick refresh
-       const [statsRes, meetingsRes] = await Promise.allSettled([
-            fetch(`${backendUrl}/users/${userId}/stats`),
-            fetch(`${backendUrl}/meetings/user/${userId}`)
-       ]);
-       if (meetingsRes.status === 'fulfilled' && meetingsRes.value.ok) setMeetings(await meetingsRes.value.json());
-  };
-
   const upcomingMeetings = React.useMemo(() => {
+    if (!meetings) return [];
     const now = new Date();
-    console.log("Filtering meetings relative to NOW:", now.toISOString());
     
-    const upcoming = meetings
+    return meetings
       .filter(m => {
           const mStartDate = new Date(m.startTime);
           const mEndDate = new Date(m.endTime);
           
-          if (isNaN(mStartDate.getTime()) || isNaN(mEndDate.getTime())) {
-              console.warn("Invalid meeting date:", m);
-              return false;
-          }
+          if (isNaN(mStartDate.getTime()) || isNaN(mEndDate.getTime())) return false;
           
           // Show if the meeting hasn't ENDED yet (includes ongoing)
-          const isRelevant = mEndDate > now;
-          
-          if (!isRelevant) {
-             // console.log("Skipping past meeting:", m.title); 
-          }
-          return isRelevant;
+          return mEndDate > now;
       })
       .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
-    
-    console.log("Final Upcoming List:", upcoming);
-    return upcoming;
   }, [meetings]);
 
   // Calculate meetings count by date for the calendar
   const getMeetingCountByDate = (date: Date): number => {
-    return meetings.filter(
+    return meetings?.filter(
       (m) => new Date(m.startTime).toDateString() === date.toDateString()
-    ).length;
+    ).length || 0;
   };
 
   // Get meetings for selected date
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
-    if (date) {
+    if (date && meetings) {
       const meetingsForDate = meetings.filter(
         (m) => new Date(m.startTime).toDateString() === date.toDateString()
       );
@@ -188,6 +144,11 @@ export default function Page() {
   };
 
   const [isCreating, setIsCreating] = React.useState(false);
+
+  // Helper to refresh all data
+  const refreshDashboard = async () => {
+      await Promise.all([mutateStats(), mutateMeetings()]);
+  };
 
   const handleCreateMeeting = async () => {
     if (!userId) return;
@@ -207,8 +168,6 @@ export default function Page() {
         toast.error("End time must be after start time");
         return;
       }
-
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URI || "http://localhost:4001";
       
       let res;
       if (editingId) {
@@ -241,7 +200,8 @@ export default function Page() {
 
       if (!res.ok) throw new Error("Failed to save meeting");
 
-      const savedMeeting = await res.json();
+      // Optimistic or Full Refresh
+      await refreshDashboard();
       
       if (editingId) {
           toast.success("Meeting updated!");
@@ -251,9 +211,6 @@ export default function Page() {
               description: "Email reminders coming soon in a future update."
           });
       }
-      
-      // Refresh everything to ensure stats and list are in sync
-      await refreshDashboard();
       
       setShowScheduleDialog(false);
       
@@ -277,7 +234,7 @@ export default function Page() {
   const handleCancelMeeting = async (id: string) => {
       if (!confirm("Are you sure you want to cancel this meeting?")) return;
       try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URI || "http://localhost:4001"}/meetings/${id}`, { method: 'DELETE' });
+          const res = await fetch(`${backendUrl}/meetings/${id}`, { method: 'DELETE' });
           if (res.ok) {
               await refreshDashboard();
               toast.success("Meeting cancelled");
@@ -375,7 +332,7 @@ export default function Page() {
                 <VideoIcon className="size-4 text-primary" />
               </div>
             </div>
-            <p className="text-2xl font-bold">{stats.meetingsCount}</p>
+            <p className="text-2xl font-bold">{stats?.meetingsCount || 0}</p>
             <p className="text-xs text-muted-foreground">All time</p>
           </div>
 
@@ -387,7 +344,7 @@ export default function Page() {
                 <CalendarIcon className="size-4 text-blue-500" />
               </div>
             </div>
-            <p className="text-2xl font-bold">{stats.upcomingMeetingsCount}</p>
+            <p className="text-2xl font-bold">{stats?.upcomingMeetingsCount || 0}</p>
             <p className="text-xs text-muted-foreground">Scheduled meetings</p>
           </div>
 

@@ -1,11 +1,12 @@
 "use client";
 
 import { useNavigation } from "@/contexts/navigation-context";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { toast } from "sonner";
 import { DiscussionCard } from "@/components/discussion-card";
+import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
 
 interface Discussion {
   id: string;
@@ -28,38 +29,32 @@ interface Discussion {
 export default function SavedPage() {
   const { setActiveSection, setActiveSubSection } = useNavigation();
   const { data: session } = useSession();
-  
-  const [discussions, setDiscussions] = useState<Discussion[]>([]);
-  const [loading, setLoading] = useState(true);
-  
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URI || "http://localhost:4001";
 
   useEffect(() => {
     setActiveSection("Resources");
     setActiveSubSection("Saved Items");
-    if (session?.user?.id) {
-        fetchSavedDiscussions();
-    } else {
-        setLoading(false);
-    }
-  }, [setActiveSection, setActiveSubSection, session?.user?.id]);
+  }, [setActiveSection, setActiveSubSection]);
 
-  const fetchSavedDiscussions = async () => {
-    try {
-      const res = await fetch(`${backendUrl}/discussions/saved?userId=${session?.user?.id}`);
-      if (!res.ok) throw new Error("Failed to load");
-      const data = await res.json();
-      setDiscussions(data);
-    } catch (e) {
-      toast.error("Failed to load saved items");
-    } finally {
-      setLoading(false);
+  const { data: discussions, isLoading: loading, mutate } = useSWR<Discussion[]>(
+    session?.user?.id ? `${backendUrl}/discussions/saved?userId=${session.user.id}` : null,
+    fetcher,
+    {
+        fallbackData: []
     }
-  };
+  );
 
   const handleSaveToggle = (postId: string, isSaved: boolean) => {
-      if (!isSaved) {
-          setDiscussions(prev => prev.filter(p => p.id !== postId));
+      // Optimistic update: if unsaved, remove from list immediately
+      if (!isSaved && discussions) {
+          mutate(discussions.filter(p => p.id !== postId), false);
+          // The DiscussionCard component handles the actual API call, so we just need to update the local list view
+          // We should ideally verify the API call succeeded, but DiscussionCard manages that state. 
+          // However, since we are removing it, if the API call fails in DiscussionCard, we might be out of sync.
+          // For now, this is a good optimistic UX for the "Saved" page.
+          
+          // Revalidate after a short delay to ensure backend state consistency
+          setTimeout(() => mutate(), 1000);
       }
   };
 
@@ -72,14 +67,18 @@ export default function SavedPage() {
 
       {loading ? (
         <div className="flex justify-center py-10"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
-      ) : discussions.length === 0 ? (
+      ) : !discussions || discussions.length === 0 ? (
         <div className="text-center py-10 text-muted-foreground">
             <p>You haven't saved any items yet.</p>
         </div>
       ) : (
         <div className="grid gap-4">
             {discussions.map((post) => (
-                <DiscussionCard key={post.id} post={post} onSaveToggle={handleSaveToggle} />
+                <DiscussionCard 
+                    key={post.id} 
+                    post={{...post, isSaved: true}} // Ensure isSaved is true for items in this list
+                    onSaveToggle={handleSaveToggle} 
+                />
             ))}
         </div>
       )}

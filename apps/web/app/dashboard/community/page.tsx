@@ -14,6 +14,8 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@workspace/ui/components/avatar";
 import { DiscussionCard } from "@/components/discussion-card";
+import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
 
 interface Discussion {
   id: string;
@@ -36,34 +38,22 @@ export default function CommunityPage() {
   const { setActiveSection, setActiveSubSection } = useNavigation();
   const { data: session } = useSession();
   
-  const [discussions, setDiscussions] = useState<Discussion[]>([]);
-  const [loading, setLoading] = useState(true);
-  
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URI || "http://localhost:4001";
+  const { data: discussions, error, isLoading, mutate } = useSWR<Discussion[]>(
+      `${backendUrl}/discussions?userId=${session?.user?.id || ''}`,
+      fetcher
+  );
+
   // Create Modal State
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newContent, setNewContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URI || "http://localhost:4001";
 
   useEffect(() => {
     setActiveSection("Community");
     setActiveSubSection("Discussions");
-    fetchDiscussions();
-  }, [setActiveSection, setActiveSubSection, session?.user?.id]);
-
-  const fetchDiscussions = async () => {
-    try {
-      const res = await fetch(`${backendUrl}/discussions?userId=${session?.user?.id || ''}`);
-      if (!res.ok) throw new Error("Failed to search");
-      const data = await res.json();
-      setDiscussions(data);
-    } catch (e) {
-      toast.error("Failed to load discussions");
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [setActiveSection, setActiveSubSection]);
 
   const handleCreate = async () => {
     if (!newTitle.trim() || !newContent.trim()) return;
@@ -90,13 +80,14 @@ export default function CommunityPage() {
       }
       
       const createdDiscussion = await res.json();
-      setDiscussions(prev => [createdDiscussion, ...prev]);
+      
+      // Optimistic update with SWR mutation
+      mutate([createdDiscussion, ...(discussions || [])], false);
 
       toast.success("Discussion started!", { description: "Your topic is now live." });
       setNewTitle("");
       setNewContent("");
       setIsCreateOpen(false);
-      // No need to fetchDiscussions() as we updated state optimistically
     } catch (e: any) {
         toast.error(e.message || "Failed to create discussion");
     } finally {
@@ -152,9 +143,9 @@ export default function CommunityPage() {
         </Dialog>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="flex justify-center py-10"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
-      ) : discussions.length === 0 ? (
+      ) : !discussions || discussions.length === 0 ? (
         <div className="text-center py-10 text-muted-foreground">
             <p>No discussions yet. Be the first to start one!</p>
         </div>

@@ -1,14 +1,16 @@
 
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Card, CardContent } from "@workspace/ui/components/card";
+import React from "react";
+import { Card } from "@workspace/ui/components/card";
 import { Button } from "@workspace/ui/components/button";
 import { ScrollArea } from "@workspace/ui/components/scroll-area";
 import { Bell, Trash2, CheckCircle, UserPlus, MessageCircle, Info } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
 
 type Notification = {
   id: string;
@@ -23,56 +25,54 @@ const BACKEND_URI = process.env.NEXT_PUBLIC_BACKEND_URI || "http://localhost:400
 
 export default function NotificationsPage() {
   const { data: session } = useSession();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const loadNotifications = async () => {
-    if (!session?.user?.id) return;
-    console.log("Loading notifications for user:", session.user.id);
-    try {
-      setLoading(true);
-      const res = await fetch(`${BACKEND_URI}/notifications?userId=${session.user.id}`);
-      if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-      const data = await res.json();
-      setNotifications(data);
-    } catch (error) {
-      console.error("Notification load error (suppressed):", error);
-    } finally {
-      setLoading(false);
+  
+  const { data: notifications, isLoading: loading, mutate } = useSWR<Notification[]>(
+    session?.user?.id ? `${BACKEND_URI}/notifications?userId=${session.user.id}` : null,
+    fetcher,
+    {
+        fallbackData: []
     }
-  };
-
-  useEffect(() => {
-    loadNotifications();
-  }, [session?.user?.id]);
+  );
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
+        // Optimistic update
+        mutate((notifications || []).filter(n => n.id !== id), false);
+        
         const res = await fetch(`${BACKEND_URI}/notifications/${id}`, { method: 'DELETE' });
         if (res.ok) {
-            setNotifications(prev => prev.filter(n => n.id !== id));
             toast.success("Notification removed");
+            mutate(); // Revalidate to be sure
+        } else {
+            throw new Error("Failed to delete");
         }
     } catch(e) {
         toast.error("Failed to delete");
+        mutate(); // Revert on error
     }
   }
 
   const handleClearAll = async () => {
       if (!session?.user?.id) return;
       try {
+        // Optimistic clear
+        mutate([], false);
+
         const res = await fetch(`${BACKEND_URI}/notifications/all`, { 
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userId: session.user.id })
         });
         if (res.ok) {
-            setNotifications([]);
             toast.success("All notifications cleared");
+            mutate();
+        } else {
+            throw new Error("Failed");
         }
       } catch(e) {
           toast.error("Failed to clear all");
+          mutate(); // Revert
       }
   }
 
@@ -92,7 +92,7 @@ export default function NotificationsPage() {
             <h1 className="text-2xl font-bold tracking-tight">Notifications</h1>
             <p className="text-muted-foreground">Stay updated with your network.</p>
          </div>
-         {notifications.length > 0 && (
+         {notifications && notifications.length > 0 && (
              <Button variant="outline" size="sm" onClick={handleClearAll} className="text-red-500 hover:text-red-600 hover:bg-red-50">
                  <Trash2 className="w-4 h-4 mr-2" /> Clear All
              </Button>
@@ -104,7 +104,7 @@ export default function NotificationsPage() {
             <div className="p-4 space-y-2">
                 {loading ? (
                     <div className="text-center py-10 text-muted-foreground">Loading...</div>
-                ) : notifications.length === 0 ? (
+                ) : !notifications || notifications.length === 0 ? (
                     <div className="text-center py-20 flex flex-col items-center gap-4 text-muted-foreground">
                         <div className="p-4 bg-muted/50 rounded-full">
                              <Bell className="w-8 h-8 opacity-50" />

@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import { ChangeEvent } from "react";
 import { useSession } from "next-auth/react";
 import { Textarea } from "@workspace/ui/components/textarea";
+import useSWR from "swr";
+import { fetcher } from "@/lib/fetcher";
 
 interface CommentType {
   id: string;
@@ -167,37 +169,31 @@ export default function DiscussionDetailsPage() {
   const { id } = useParams();
   const { setActiveSection, setActiveSubSection } = useNavigation();
   const { data: session } = useSession();
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URI || "http://localhost:4001";
   
-  const [discussion, setDiscussion] = useState<DiscussionType | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: discussion, error, isLoading, mutate } = useSWR<DiscussionType>(
+     id ? `${backendUrl}/discussions/${id}` : null,
+     fetcher
+  );
+
   const [commentText, setCommentText] = useState("");
   const [replyToId, setReplyToId] = useState<string | null>(null);
   const [isEditingDiscussion, setIsEditingDiscussion] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URI || "http://localhost:4001";
 
   useEffect(() => {
     setActiveSection("Community");
     setActiveSubSection("Discussions");
-    fetchData();
   }, [id, setActiveSection, setActiveSubSection]);
 
-  const fetchData = async () => {
-    try {
-        const res = await fetch(`${backendUrl}/discussions/${id}`, { cache: "no-store" });
-        if (!res.ok) throw new Error("Not found");
-        const data = await res.json();
-        setDiscussion(data);
-        setEditTitle(data.title);
-        setEditContent(data.content);
-    } catch (e) {
-        toast.error("Failed to load discussion");
-    } finally {
-        setLoading(false);
-    }
-  };
-
+  useEffect(() => {
+      if (discussion) {
+          setEditTitle(discussion.title);
+          setEditContent(discussion.content);
+      }
+  }, [discussion]);
+  
   const [isPostingComment, setIsPostingComment] = useState(false);
 
   const handlePostComment = async () => {
@@ -222,19 +218,18 @@ export default function DiscussionDetailsPage() {
         // Optimistic Update
         if (discussion) {
             if (replyToId) {
-                // If reply, simplistic refresh or deep update. 
-                // For deep update: find parent and append. Complex, so we'll refetch for replies but at least we handle loading state.
-                fetchData();
+                // If reply, revalidate fully for simplicity
+                mutate();
             } else {
                 // Top level, append easily
-                setDiscussion(prev => prev ? {
-                    ...prev,
-                    comments: [...prev.comments, { ...newComment, replies: [], reactions: [] }],
-                    _count: { ...prev._count, comments: prev._count.comments + 1, reactions: prev._count.reactions }
-                } : null);
+                 mutate({
+                    ...discussion,
+                    comments: [...discussion.comments, { ...newComment, replies: [], reactions: [] }],
+                    _count: { ...discussion._count, comments: discussion._count.comments + 1, reactions: discussion._count.reactions }
+                }, false);
             }
         } else {
-            fetchData();
+             mutate();
         }
         
         setCommentText("");
@@ -276,7 +271,7 @@ export default function DiscussionDetailsPage() {
         });
         if (!res.ok) throw new Error("Failed");
         setIsEditingDiscussion(false);
-        fetchData();
+        mutate(); // Revalidate
         toast.success("Discussion updated");
     } catch (e) {
         toast.error("Failed to update discussion");
@@ -294,22 +289,25 @@ export default function DiscussionDetailsPage() {
       const hasReacted = discussion.reactions?.some((r: any) => r.userId === session.user.id);
       
       // Optimistic
-      setDiscussion(prev => prev ? {
-          ...prev,
-          _count: { ...prev._count, reactions: hasReacted ? prev._count.reactions - 1 : prev._count.reactions + 1 },
+      mutate({
+          ...discussion,
+          _count: { ...discussion._count, reactions: hasReacted ? discussion._count.reactions - 1 : discussion._count.reactions + 1 },
           reactions: hasReacted ? [] : [{ userId: session.user.id }]
-      } : null);
+      }, false);
 
       try {
         await fetch(`${backendUrl}/discussions/reactions`, {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userId: session.user.id, targetId: discussion.id, targetType: "DISCUSSION", type: "LIKE" })
         });
-      } catch(e) {}
+        mutate(); // Revalidate ensures sync
+      } catch(e) {
+          mutate(); // Revert on error
+      }
   };
 
-  if (loading) return <div className="flex h-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
-  if (!discussion) return <div className="p-6">Discussion not found</div>;
+  if (isLoading) return <div className="flex h-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+  if (error || !discussion) return <div className="p-6">Discussion not found</div>;
 
   const isAuthor = session?.user?.id === discussion.author.id;
   const hasReacted = discussion.reactions?.some((r: any) => r.userId === session?.user?.id);
@@ -425,7 +423,7 @@ export default function DiscussionDetailsPage() {
                             window.scrollTo({ top: document.querySelector('textarea')?.getBoundingClientRect().top! + window.scrollY - 100, behavior: 'smooth' });
                             document.querySelector('textarea')?.focus();
                         }} 
-                        onRefresh={fetchData} 
+                        onRefresh={() => mutate()} 
                         currentUserId={session?.user?.id}
                     />
                  </CardContent>
