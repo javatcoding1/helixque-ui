@@ -22,7 +22,7 @@
     <a href="#deployment"><b>Deployment Guide</b></a>
 </p>
 
-Meet [Helixque](https://github.com/HXQLabs/Helixque), a professional real-time video chat application that pairs people based on their preferences. Built with WebRTC for secure, low-latency peer-to-peer media and a modern Turborepo architecture—delivering a premium experience for networking and collaboration. 🎥
+Meet [Helixque](https://github.com/HXQLabs/Helixque), a professional real-time video chat application that pairs people based on their preferences. Built with WebRTC for secure, low-latency peer-to-peer media and a modern Turborepo architecture delivering a premium experience for networking and collaboration. 🎥
 
 > Helixque is continuously evolving. Your suggestions, ideas, and reported bugs help us immensely. Do not hesitate to join the conversation on [Discord](https://discord.gg/dQUh6SY9Uk) or raise a GitHub issue. We read everything and respond to most.
 
