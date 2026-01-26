@@ -4,21 +4,21 @@ Helixque UI is a modern web application built with [Next.js 15](https://nextjs.o
 
 ## Tech Stack
 
--   **Framework**: Next.js 15 (App Router)
--   **Bundler**: Turbopack
--   **Styling**: Tailwind CSS
--   **UI Components**: Shadcn UI (Radix Primitives)
--   **Authentication**: NextAuth.js (LinkedIn Provider)
--   **State Management**: React Context & Hooks
--   **Package Manager**: pnpm
--   **Monorepo Tool**: Turborepo
+- **Framework**: Next.js 15 (App Router)
+- **Bundler**: Turbopack
+- **Styling**: Tailwind CSS
+- **UI Components**: Shadcn UI (Radix Primitives)
+- **Authentication**: NextAuth.js (LinkedIn Provider)
+- **State Management**: React Context & Hooks
+- **Package Manager**: pnpm
+- **Monorepo Tool**: Turborepo
 
 ## Prerequisites
 
 Ensure you have the following installed:
 
--   **Node.js**: >= 20.0.0
--   **pnpm**: >= 9.0.0 (or the version specified in `package.json`)
+- **Node.js**: >= 20.0.0
+- **pnpm**: >= 9.0.0 (or the version specified in `package.json`)
 
 ## Getting Started
 
@@ -66,7 +66,7 @@ pnpm dev
 
 This commands runs `turbo dev`. The web application will be available at:
 
--   **Web UI**: [http://localhost:3000](http://localhost:3000)
+- **Web UI**: [http://localhost:3000](http://localhost:3000)
 
 ### 5. Building for Production
 
@@ -95,16 +95,16 @@ helixque-ui/
 
 ## Features
 
--   **Dashboard**: Comprehensive overview of stats, upcoming meetings, and community updates.
--   **Video Meetings**: Integrated WebRTC-based video calling with device checks.
--   **AI Assistant**: Chat interface for career advice and code reviews.
--   **Leaderboard**: Gamified community contribution tracking.
--   **Profile Management**: Edit profile, skills, and preferences.
--   **Theme Support**: Dark/Light mode toggle.
+- **Dashboard**: Comprehensive overview of stats, upcoming meetings, and community updates.
+- **Video Meetings**: Integrated WebRTC-based video calling with device checks.
+- **AI Assistant**: Chat interface for career advice and code reviews.
+- **Leaderboard**: Gamified community contribution tracking.
+- **Profile Management**: Edit profile, skills, and preferences.
+- **Theme Support**: Dark/Light mode toggle.
 
 ## Commands
 
--   `pnpm dev`: Start development server.
--   `pnpm build`: Build for production.
--   `pnpm lint`: Run ESLint across all packages.
--   `pnpm format`: Format code with Prettier.
+- `pnpm dev`: Start development server.
+- `pnpm build`: Build for production.
+- `pnpm lint`: Run ESLint across all packages.
+- `pnpm format`: Format code with Prettier.

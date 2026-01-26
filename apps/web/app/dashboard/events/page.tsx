@@ -19,20 +19,23 @@ function EventsPageContent() {
       <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center mb-4">
         <CalendarClock className="h-12 w-12 text-primary" />
       </div>
-      
+
       <div className="space-y-2 max-w-md">
-        <h1 className="text-3xl font-bold tracking-tight">Events Coming Soon</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          Events Coming Soon
+        </h1>
         <p className="text-muted-foreground text-lg">
-           We are planning some exciting webinars, workshops, and meetups. Stay tuned for updates!
+          We are planning some exciting webinars, workshops, and meetups. Stay
+          tuned for updates!
         </p>
       </div>
 
       <div className="pt-4">
-          <Button asChild variant="outline">
-              <Link href="/dashboard/community">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Community
-              </Link>
-          </Button>
+        <Button asChild variant="outline">
+          <Link href="/dashboard/community">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Community
+          </Link>
+        </Button>
       </div>
     </div>
   );
