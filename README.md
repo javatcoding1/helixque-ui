@@ -162,7 +162,6 @@ helixque-ui/
 │  ├─ ui/                # Shared UI Components
 │  ├─ eslint-config/     # Shared Eslint Config
 │  └─ typescript-config/ # Shared TS Config
-├─ user_backend/         # Backend Service (Node.js/Express)
 ├─ assets/               # Images and static files
 ├─ package.json          # Root package.json (Workspaces)
 └─ README.md
