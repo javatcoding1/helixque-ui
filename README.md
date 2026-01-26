@@ -44,34 +44,21 @@ cd helixque-ui
 
 2. **Install dependencies**
 
-This project uses `pnpm` for the monorepo and `npm` for the standalone backend service.
+This project uses `pnpm` for dependency management.
 
 ```bash
-# Frontend (Root)
+# Install dependencies
 pnpm install
 
-# Backend Service
-cd user_backend && npm install
 ```
 
-3. **Configure environment variables**
+
+3. **Start development servers**
 
 ```bash
-# Backend: Copy and edit .env.example
-cp user_backend/.env.example user_backend/.env
-
-# Frontend: Create .env.local in apps/web
-echo "NEXT_PUBLIC_BACKEND_URL=http://localhost:5001" > apps/web/.env.local
-```
-
-4. **Start development servers**
-
-```bash
-# Terminal 1 - Frontend (Runs Turbo dev)
+# Start development server
 pnpm dev
 
-# Terminal 2 - Backend Service
-cd user_backend && npm run dev
 ```
 
 Open your browser at `http://localhost:3000` and allow camera/microphone access. 🎉
@@ -105,42 +92,13 @@ The frontend is a **Turborepo** workspace managing the Next.js application and s
 - **`apps/web`**: Main Next.js application (App Router).
 - **`packages/ui`**: Shared UI components (shadcn/ui).
 
-**Development commands:**
 
-```bash
-pnpm dev          # Start all apps in parallel
-pnpm build        # Build all apps
-pnpm lint         # Lint workspace
-```
 
-**Environment variables (`apps/web/.env.local`):**
 
-```env
-NEXT_PUBLIC_BACKEND_URL=http://localhost:5001
-```
 
 > **Note:** Frontend requires HTTPS in production for getUserMedia to function correctly. Device permissions must be granted by the user.
 
-### Backend Service
 
-The `user_backend` is a standalone Node.js + TypeScript service providing user management and signaling support.
-
-**Development commands:**
-
-```bash
-cd user_backend
-npm install          # Install dependencies
-npm run dev          # Start development server
-npm run build        # Build for production
-```
-
-**Environment variables (`user_backend/.env`):**
-
-```env
-PORT=5001
-NODE_ENV=development
-# Add other variables from .env.example
-```
 
 ## ⚙️ Built With
 
@@ -152,7 +110,7 @@ NODE_ENV=development
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![Turbo](https://img.shields.io/badge/Turbo-EF4444?style=for-the-badge&logo=turborepo&logoColor=white)](https://turbo.build/)
 
-## 🏗️ Project Structure
+<!-- ## 🏗️ Project Structure
 
 ```
 helixque-ui/
@@ -165,23 +123,16 @@ helixque-ui/
 ├─ assets/               # Images and static files
 ├─ package.json          # Root package.json (Workspaces)
 └─ README.md
-```
+``` -->
 
-## 🚢 Deployment
+<!-- ## 🚢 Deployment
 
 ### Frontend (Vercel)
 
 Deploy the `apps/web` project to Vercel. Ensure you set the `Root Directory` to `apps/web` if needed, or configure Vercel to handle the Monorepo (it usually detects it automatically).
 
-**Env Vars:**
-- `NEXT_PUBLIC_BACKEND_URL`: Your backend HTTPS URL.
+ -->
 
-### Backend (Render / Railway)
-
-Deploy the `user_backend` folder as a standard Node.js service.
-
-**Env Vars:**
-- `PORT`, `NODE_ENV`, etc.
 
 ## ❤️ Community
 
@@ -222,7 +173,7 @@ There are many ways you can contribute to Helixque:
 
 ### We Couldn't Have Done This Without You
 
-<a href="https://github.com/HXQLabs/Helixque/graphs/contributors">
+<a href="https://github.com/HXQLabs/helixque-ui/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=HXQLabs/helixque-ui" />
 </a>
 
